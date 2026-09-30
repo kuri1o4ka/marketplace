@@ -1,2 +1,22 @@
 # marketplace
-archive clothing marketplace
+## Маркетплейс архивных вещей (одежды) с аукционами.
+### Функционал: размещение бу вещей, возможность проведение аукциона вещи, оценка состояния вещи по фото с помощью AI инструментов (beta). Возможность добавления в корзину и заказа. 
+
+Стек:
+- frontend:
+typescript
+html + css
+- database:
+postgres
+- backend:
+golang
+redis?
+docker
+websocket
+- ai functional (beta):
+Ollama + vision-модель
+
+- A - Ядро бэкенда
+- B - Инфраструктура и тесты
+- C - Логика аукциона, нагрузка
+- D - ИИ модель, связь с бэкендом
