@@ -108,7 +108,7 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (string, *User, erro
 	return token, u, nil
 }
 
-func (s *Service) Authunticate(ctx context.Context, token string) (*User, error) {
+func (s *Service) Authenticate(ctx context.Context, token string) (*User, error) {
 	if token == "" {
 		return nil, ErrSessionNotFound
 	}
