@@ -3,11 +3,47 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
-  hello:
+  validate-infra:
+    name: Validate Infrastructure and Docker
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
       - uses: actions/checkout@v4
-      - run: echo "broo we are cooked"
-      - run: ls -la
+     
+      - name: Set up Docker Compose
+        run: docker compose version
+
+      - name: Validate docker-compose syntax
+        run: |
+          echo "Checking docker-compose.yml validity..."
+          docker compose config --quiet
+          echo "Docker compose config is valid!"
+  backend-check:
+    name: Backend (Go) Build Check
+    runs-on: ubuntu-latest
+    needs: validate-infra
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true 
+
+      - name: Check Go version
+        run: go version
+
+      - name: Check if go.mod exists and test build
+        run: |
+          if [ -f "go.mod" ]; then
+            echo "go.mod found. Running go test..."
+            go test ./...
+          else
+            echo "go.mod not created yet by backend team. Skipping Go tests."
+          fi
