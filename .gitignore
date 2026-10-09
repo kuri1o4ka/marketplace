@@ -1,0 +1,22 @@
+# Секреты и переменные окружения
+.env
+*.env.local
+
+# Системные файлы и IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Go бинарники и артефакты тестов
+bin/
+dist/
+coverage.out
+*.test
+
+# Node.js
+node_modules/
+
+# Данные контейнеров
+pgdata/
+miniodata/
