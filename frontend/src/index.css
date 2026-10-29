@@ -73,7 +73,7 @@
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-none px-6 py-3 text-[12px] font-semibold uppercase tracking-luxe transition disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex items-center justify-center gap-2 rounded-none px-6 py-3 text-[12px] font-semibold uppercase tracking-luxe transition duration-300 disabled:cursor-not-allowed disabled:opacity-40;
   }
 
   .btn-primary {
@@ -81,7 +81,7 @@
   }
 
   .btn-ghost {
-    @apply btn border border-night-600 bg-night-850 text-cream hover:border-cream hover:text-accent;
+    @apply btn border border-night-600 bg-night-850 text-cream hover:border-cream hover:text-muted;
   }
 
   .btn-quiet {

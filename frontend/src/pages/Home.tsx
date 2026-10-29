@@ -117,7 +117,7 @@ export default function Home() {
       <section className="border-b border-night-600">
         <div className="container-luxe py-16 text-center md:py-24">
           <p className="label text-muted">Маркетплейс архивной одежды</p>
-          <h1 className="mx-auto mt-6 max-w-3xl font-display text-4xl leading-tight text-cream sm:text-5xl lg:text-6xl">
+          <h1 className="mx-auto mt-6 w-full font-display text-5xl leading-[1.05] text-cream sm:text-6xl lg:text-7xl">
             Вещи с историей.
             <br />
             Новая жизнь.

@@ -21,14 +21,13 @@ export function ListingCard({ listing, index = 0 }: { listing: ListingSummary; i
           className="aspect-[3/4] w-full"
           imgClassName="group-hover:scale-[1.04]"
         />
-        <div className="absolute left-3 top-3 flex flex-col items-start gap-2">
+        <div className="absolute left-3 top-3">
           {isAuction ? (
             <Badge tone="accent">
               <Gavel size={11} />
               Аукцион
             </Badge>
           ) : null}
-          <Badge tone="muted">{listing.category}</Badge>
         </div>
         <div className="absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-night-950/90 via-night-950/30 to-transparent p-4 opacity-0 transition duration-300 group-hover:opacity-100">
           <span className="text-[10px] uppercase tracking-[0.2em] text-cream/80">{listing.seller_name}</span>

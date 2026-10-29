@@ -70,13 +70,13 @@ export function Header() {
   const navClass = ({ isActive }: { isActive: boolean }) =>
     cn(
       'relative py-1 text-[11px] font-semibold uppercase tracking-[0.18em] transition',
-      isActive ? 'text-accent' : 'text-muted hover:text-cream',
+      isActive ? 'text-night-950' : 'text-night-600 hover:text-night-950',
     );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-night-600 bg-night-950/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-night-600 bg-cream text-night-950 backdrop-blur-xl">
       <div className="container-luxe relative flex h-[72px] items-center justify-between gap-6">
-        <Link to="/" className="font-display text-2xl tracking-[0.12em] text-cream transition hover:text-accent">
+        <Link to="/" className="font-display text-2xl tracking-[0.12em] text-night-950 transition hover:text-night-600">
           POLYCLOTHES.
         </Link>
 
@@ -96,7 +96,7 @@ export function Header() {
         <div className="flex items-center gap-2 sm:gap-4">
           <Link
             to="/cart"
-            className="relative flex h-10 w-10 items-center justify-center text-muted transition hover:text-accent"
+            className="relative flex h-10 w-10 items-center justify-center text-night-600 transition hover:text-night-950"
             aria-label="Корзина"
           >
             <ShoppingBag size={20} />
@@ -112,13 +112,13 @@ export function Header() {
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((open) => !open)}
-                className="flex items-center gap-2 border border-night-600 py-1.5 pl-1.5 pr-3 text-left transition hover:border-cream"
+                className="flex items-center gap-2 border border-night-600 py-1.5 pl-1.5 pr-3 text-left transition hover:border-night-950"
               >
                 <Avatar name={user.display_name} size={30} />
-                <span className="hidden max-w-28 truncate text-xs font-medium text-cream md:block">
+                <span className="hidden max-w-28 truncate text-xs font-medium text-night-950 md:block">
                   {user.display_name}
                 </span>
-                <ChevronDown size={14} className={cn('text-muted transition', userMenuOpen && 'rotate-180')} />
+                <ChevronDown size={14} className={cn('text-night-600 transition', userMenuOpen && 'rotate-180')} />
               </button>
 
               {userMenuOpen ? (
@@ -172,11 +172,11 @@ export function Header() {
             </div>
           ) : (
             <div className="hidden items-center gap-2 sm:flex">
-              <Link to="/login" className="btn-quiet px-3 py-2">
+              <Link to="/login" className="btn-ghost px-3 py-2">
                 <UserIcon size={15} />
                 Войти
               </Link>
-              <Link to="/register" className="btn-primary px-4 py-2 text-[10px]">
+              <Link to="/register" className="btn-ghost px-4 py-2 text-[10px]">
                 Регистрация
               </Link>
             </div>
@@ -185,7 +185,7 @@ export function Header() {
           <button
             type="button"
             onClick={() => setMobileOpen((open) => !open)}
-            className="flex h-10 w-10 items-center justify-center text-muted transition hover:text-cream lg:hidden"
+            className="flex h-10 w-10 items-center justify-center text-night-600 transition hover:text-night-950 lg:hidden"
             aria-label="Меню"
           >
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
@@ -194,7 +194,7 @@ export function Header() {
       </div>
 
       {mobileOpen ? (
-        <div className="absolute inset-x-0 top-full border-b border-night-600 bg-night-950/98 backdrop-blur-xl lg:hidden">
+        <div className="absolute inset-x-0 top-full border-b border-night-600 bg-cream backdrop-blur-xl lg:hidden">
           <nav className="container-luxe flex flex-col py-4">
             {links.map((link) => (
               <NavLink
@@ -203,8 +203,8 @@ export function Header() {
                 end={'end' in link ? link.end : undefined}
                 className={({ isActive }) =>
                   cn(
-                    'border-b border-night-800 py-3 text-xs font-semibold uppercase tracking-[0.18em] transition',
-                    isActive ? 'text-accent' : 'text-muted',
+                    'border-b border-night-700 py-3 text-xs font-semibold uppercase tracking-[0.18em] transition',
+                    isActive ? 'text-night-950' : 'text-night-600',
                   )
                 }
               >
@@ -216,8 +216,8 @@ export function Header() {
                 to="/moderation"
                 className={({ isActive }) =>
                   cn(
-                    'border-b border-night-800 py-3 text-xs font-semibold uppercase tracking-[0.18em]',
-                    isActive ? 'text-accent' : 'text-muted',
+                    'border-b border-night-700 py-3 text-xs font-semibold uppercase tracking-[0.18em]',
+                    isActive ? 'text-night-950' : 'text-night-600',
                   )
                 }
               >

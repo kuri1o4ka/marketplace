@@ -20,7 +20,7 @@ export default {
           dark: '#D9D9D9',
         },
         cream: '#FFFFFF',
-        muted: '#9CA3AF',
+        muted: '#B9C0CA',
         danger: '#E5484D',
         success: '#34D399',
       },
