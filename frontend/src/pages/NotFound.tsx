@@ -30,7 +30,7 @@ export default function NotFound() {
           <Link
             key={item.title}
             to={item.to}
-            className="flex items-start gap-3 border border-night-600 bg-night-900/40 p-4 transition hover:border-accent/60"
+            className="flex items-start gap-3 border border-night-600 bg-night-900/40 rounded-xl p-4 transition hover:border-accent/60"
           >
             <item.icon size={17} className="mt-0.5 text-muted" />
             <div>

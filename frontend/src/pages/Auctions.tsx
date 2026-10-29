@@ -76,7 +76,7 @@ export default function Auctions() {
                 <Link
                   key={auction.id}
                   to={`/auctions/${auction.id}`}
-                  className="group flex flex-col border border-night-600 bg-night-900/60 transition hover:border-accent/60 hover:bg-night-900 animate-fadeUp"
+                  className="group flex flex-col border border-night-600 bg-night-900/60 rounded-xl transition hover:border-accent/60 hover:bg-night-900 animate-fadeUp"
                   style={{ animationDelay: `${index * 60}ms` }}
                 >
                   <div className="relative">

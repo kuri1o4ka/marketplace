@@ -16,7 +16,7 @@ export function AuthShell({
 }) {
   return (
     <div className="container-luxe py-12 md:py-20">
-      <div className="mx-auto w-full max-w-md border border-night-600 bg-night-900 p-6 sm:p-10">
+      <div className="mx-auto w-full max-w-md border border-night-600 bg-night-900 rounded-xl p-6 sm:p-10">
         <Link to="/" className="font-display text-xl tracking-[0.12em] text-cream">
           POLYCLOTHES.
         </Link>

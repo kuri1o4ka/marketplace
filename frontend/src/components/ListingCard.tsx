@@ -11,10 +11,10 @@ export function ListingCard({ listing, index = 0 }: { listing: ListingSummary; i
   return (
     <Link
       to={isAuction ? '/auctions' : `/listing/${listing.id}`}
-      className="group flex flex-col border border-night-600 bg-night-900/60 transition duration-300 hover:border-accent/60 hover:bg-night-900 animate-fadeUp"
+      className="group flex flex-col border border-night-600 bg-night-900/60 rounded-xl transition duration-300 hover:border-accent/60 hover:bg-night-900 animate-fadeUp"
       style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
     >
-      <div className="relative">
+      <div className="relative overflow-hidden rounded-xl">
         <SmartImage
           src={listing.cover_image}
           alt={listing.title}
@@ -53,7 +53,7 @@ export function ListingCard({ listing, index = 0 }: { listing: ListingSummary; i
 
 export function ListingCardSkeleton() {
   return (
-    <div className="border border-night-600 bg-night-900/60">
+    <div className="border border-night-600 bg-night-900/60 rounded-xl">
       <Skeleton className="aspect-[3/4] w-full" />
       <div className="space-y-3 p-4">
         <Skeleton className="h-2.5 w-24" />

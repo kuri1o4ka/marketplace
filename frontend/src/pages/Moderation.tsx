@@ -94,7 +94,7 @@ export default function Moderation() {
             {items.map((listing) => {
               const isRejecting = rejectingId === listing.id;
               return (
-                <article key={listing.id} className="border border-night-600 bg-night-900/40">
+                <article key={listing.id} className="border border-night-600 bg-night-900/40 rounded-xl">
                   <div className="flex flex-col gap-5 p-5 lg:flex-row lg:items-center lg:justify-between">
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-3">

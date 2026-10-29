@@ -117,10 +117,11 @@ export default function Home() {
       <section className="border-b border-night-600">
         <div className="container-luxe py-16 text-center md:py-24">
           <p className="label text-muted">Маркетплейс архивной одежды</p>
-          <h1 className="mx-auto mt-6 w-full font-display text-5xl leading-[1.05] text-cream sm:text-6xl lg:text-7xl">
-            Вещи с историей.
-            <br />
-            Новая жизнь.
+          <h1 className="mx-auto mt-6 w-full text-center font-display text-5xl leading-[1.05] text-cream sm:text-6xl lg:text-7xl">
+            <span className="block">
+              <span className="bg-cream px-2 text-night-950 sm:px-3">Вещи с историей.</span>
+            </span>
+            <span className="mt-2 block animate-fadeUp">Новая жизнь.</span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-sm leading-relaxed text-muted sm:text-base">
             Покупайте у проверенных продавцов и продавайте то, что заслуживает второй жизни.
@@ -208,7 +209,7 @@ export default function Home() {
             </div>
 
             {filtersOpen ? (
-              <div className="grid gap-4 border border-night-600 bg-night-900/60 p-4 sm:grid-cols-2 lg:grid-cols-4 animate-fadeUp">
+              <div className="grid gap-4 border border-night-600 bg-night-900/60 rounded-xl p-4 sm:grid-cols-2 lg:grid-cols-4 animate-fadeUp">
                 <Field label="Бренд">
                   <Select
                     value={brandId ? String(brandId) : ''}

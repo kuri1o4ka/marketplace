@@ -27,7 +27,7 @@ export function SmartImage({
   const value: ImageStatus = status.src === src ? status.value : 'loading';
 
   return (
-    <div className={cn('relative overflow-hidden bg-night-850', className)}>
+    <div className={cn('relative overflow-hidden rounded-xl bg-night-850', className)}>
       {value === 'loading' && src ? <div className="skeleton absolute inset-0" /> : null}
       {!src || value === 'failed' ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-night-500">

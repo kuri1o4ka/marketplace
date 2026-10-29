@@ -190,19 +190,19 @@ export default function ListingDetail() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="border border-night-600 bg-night-900/60 p-4">
+              <div className="border border-night-600 bg-night-900/60 rounded-xl p-4">
                 <p className="label">Размер</p>
                 <p className="mt-2 text-sm text-cream">{item.size || 'Не указан'}</p>
               </div>
-              <div className="border border-night-600 bg-night-900/60 p-4">
+              <div className="border border-night-600 bg-night-900/60 rounded-xl p-4">
                 <p className="label">Цвет</p>
                 <p className="mt-2 text-sm text-cream">{item.color || 'Не указан'}</p>
               </div>
-              <div className="border border-night-600 bg-night-900/60 p-4">
+              <div className="border border-night-600 bg-night-900/60 rounded-xl p-4">
                 <p className="label">Состояние</p>
                 <p className="mt-2 text-sm text-cream">{conditionLabel(item.condition)}</p>
               </div>
-              <div className="border border-night-600 bg-night-900/60 p-4">
+              <div className="border border-night-600 bg-night-900/60 rounded-xl p-4">
                 <p className="label">Продавец</p>
                 <p className="mt-2 truncate text-sm text-cream">{item.seller_name}</p>
               </div>

@@ -144,7 +144,7 @@ export default function AuctionDetail() {
         </div>
 
         <div className="space-y-6 lg:sticky lg:top-28 lg:self-start">
-          <div className="border border-night-600 bg-night-900/60 p-6">
+          <div className="border border-night-600 bg-night-900/60 rounded-xl p-6">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="label">Текущая ставка</p>
@@ -178,7 +178,7 @@ export default function AuctionDetail() {
             </div>
           </div>
 
-          <div className="border border-night-600 bg-night-900/60 p-6">
+          <div className="border border-night-600 bg-night-900/60 rounded-xl p-6">
             <p className="font-display text-2xl text-cream">Сделать ставку</p>
             <p className="mt-1 text-xs text-muted">
               Минимальная ставка — {formatMoney(minimumBid)}

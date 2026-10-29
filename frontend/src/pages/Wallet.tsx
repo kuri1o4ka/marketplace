@@ -73,7 +73,7 @@ export default function WalletPage() {
               }
             />
           ) : (
-            <div className="relative overflow-hidden border border-night-600 bg-night-900/60 p-6 sm:p-8">
+            <div className="relative overflow-hidden border border-night-600 bg-night-900/60 rounded-xl p-6 sm:p-8">
               <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full border border-night-600/40" />
               <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full border border-night-600/40" />
               <div className="relative space-y-3">
@@ -89,7 +89,7 @@ export default function WalletPage() {
             </div>
           )}
 
-          <div className="border border-night-600 bg-night-900/40">
+          <div className="border border-night-600 bg-night-900/40 rounded-xl">
             <div className="flex items-center justify-between border-b border-night-700 px-5 py-4">
               <p className="font-display text-2xl text-cream">Операции</p>
               <span className="text-[10px] uppercase tracking-[0.16em] text-muted">
@@ -143,7 +143,7 @@ export default function WalletPage() {
         </div>
 
         <aside className="space-y-5 lg:sticky lg:top-28 lg:self-start">
-          <div className="border border-night-600 bg-night-900/70 p-6">
+          <div className="border border-night-600 bg-night-900/70 rounded-xl p-6">
             <p className="font-display text-2xl text-cream">Пополнить</p>
             <form onSubmit={handleDeposit} className="mt-4 space-y-4">
               <Field label="Сумма, ₽" htmlFor="deposit-amount">
@@ -182,7 +182,7 @@ export default function WalletPage() {
             </p>
           </div>
 
-          <div className="border border-night-600 bg-night-900/60 p-5">
+          <div className="border border-night-600 bg-night-900/60 rounded-xl p-5">
             <p className="label">Как это работает</p>
             <ul className="mt-3 space-y-2 text-xs leading-relaxed text-muted">
               <li>• При оформлении заказа сумма резервируется.</li>

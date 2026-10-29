@@ -320,7 +320,7 @@ export default function Sell() {
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
-        <div className="border border-night-600 bg-night-900/40 p-5 sm:p-8">
+        <div className="border border-night-600 bg-night-900/40 rounded-xl p-5 sm:p-8">
           {step === 1 ? (
             <div className="space-y-6">
               <div className="space-y-2">
@@ -412,7 +412,7 @@ export default function Sell() {
               </div>
 
               {aiResult ? (
-                <div className="flex flex-col gap-3 border border-night-600 bg-night-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 border border-night-600 bg-night-900/60 rounded-xl p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-start gap-3">
                     <Sparkles size={18} className="mt-0.5 text-muted" />
                     <div>
@@ -544,7 +544,7 @@ export default function Sell() {
               </div>
 
               {details.sale_type === 'auction' ? (
-                <div className="grid gap-4 border border-night-600 bg-night-900/60 p-4 sm:grid-cols-2">
+                <div className="grid gap-4 border border-night-600 bg-night-900/60 rounded-xl p-4 sm:grid-cols-2">
                   <Field label="Шаг ставки, ₽" htmlFor="increment" required>
                     <Input
                       id="increment"
@@ -649,7 +649,7 @@ export default function Sell() {
         </div>
 
         <aside className="space-y-5">
-          <div className="border border-night-600 bg-night-900/60 p-5">
+          <div className="border border-night-600 bg-night-900/60 rounded-xl p-5">
             <p className="label text-muted">Превью</p>
             <SmartImage
               src={photos[0]?.preview}
@@ -664,7 +664,7 @@ export default function Sell() {
             </p>
           </div>
 
-          <div className="border border-night-600 bg-night-900/60 p-5">
+          <div className="border border-night-600 bg-night-900/60 rounded-xl p-5">
             <p className="label flex items-center gap-2">
               <Camera size={13} />
               Советы по фото
@@ -676,7 +676,7 @@ export default function Sell() {
             </ul>
           </div>
 
-          <div className="border border-night-600 bg-night-900/60 p-5">
+          <div className="border border-night-600 bg-night-900/60 rounded-xl p-5">
             <p className="label">Безопасность</p>
             <p className="mt-3 text-xs leading-relaxed text-muted">
               Оплата проходит через escrow: деньги замораживаются и перечисляются продавцу после получения

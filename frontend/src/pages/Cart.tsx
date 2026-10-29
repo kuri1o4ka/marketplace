@@ -120,7 +120,7 @@ export default function Cart() {
         </div>
       ) : (
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
-          <div className="divide-y divide-night-700 border border-night-600 bg-night-900/40">
+          <div className="divide-y divide-night-700 border border-night-600 bg-night-900/40 rounded-xl">
             {items.map((item) => (
               <div key={item.item_id} className="flex gap-4 p-4 sm:gap-5 sm:p-5">
                 <Link to={`/listing/${item.listing_id}`} className="w-24 shrink-0 sm:w-28">
@@ -163,7 +163,7 @@ export default function Cart() {
           </div>
 
           <aside className="lg:sticky lg:top-28 lg:self-start">
-            <div className="border border-night-600 bg-night-900/70 p-6">
+            <div className="border border-night-600 bg-night-900/70 rounded-xl p-6">
               <p className="font-display text-2xl text-cream">Итого</p>
 
               <div className="mt-5 space-y-3 border-b border-night-700 pb-5 text-sm">

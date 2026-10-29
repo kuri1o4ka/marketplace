@@ -129,7 +129,7 @@ export function Header() {
                     onClick={() => setUserMenuOpen(false)}
                     aria-label="Закрыть меню"
                   />
-                  <div className="absolute right-0 z-50 mt-3 w-64 border border-night-600 bg-night-900 shadow-card">
+                  <div className="absolute right-0 z-50 mt-3 w-64 rounded-xl border border-night-600 bg-night-900 shadow-card">
                     <div className="border-b border-night-700 px-4 py-3">
                       <p className="truncate text-sm text-cream">{user.display_name}</p>
                       <p className="truncate text-xs text-muted">{user.email}</p>

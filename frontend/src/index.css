@@ -65,15 +65,15 @@
   }
 
   .surface {
-    @apply border border-night-600 bg-night-900;
+    @apply border border-night-600 bg-night-900 rounded-xl;
   }
 
   .input {
-    @apply w-full rounded-none border border-night-600 bg-night-900 px-4 py-3 text-sm text-cream placeholder:text-muted/70 transition focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30;
+    @apply w-full rounded-lg border border-night-600 bg-night-900 px-4 py-3 text-sm text-cream placeholder:text-muted/70 transition focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30;
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-none px-6 py-3 text-[12px] font-semibold uppercase tracking-luxe transition duration-300 disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex items-center justify-center gap-2 rounded-none px-6 py-3 text-[12px] font-semibold uppercase tracking-luxe transition duration-300 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
   }
 
   .btn-primary {
@@ -89,7 +89,7 @@
   }
 
   .card {
-    @apply border border-night-600 bg-night-900;
+    @apply border border-night-600 bg-night-900 rounded-xl;
   }
 
   .skeleton {

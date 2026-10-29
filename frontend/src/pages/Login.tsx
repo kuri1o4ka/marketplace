@@ -106,7 +106,7 @@ export default function Login() {
         </Button>
       </form>
 
-      <div className="space-y-3 border border-night-600 bg-night-900/70 p-4">
+      <div className="space-y-3 border border-night-600 bg-night-900/70 rounded-xl p-4">
         <p className="label">Демо-аккаунты · пароль password123</p>
         <div className="grid gap-2">
           {demoAccounts.map((account) => (

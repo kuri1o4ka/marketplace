@@ -77,7 +77,7 @@ export default function Orders() {
             {items.map((order, index) => (
               <article
                 key={order.id}
-                className="border border-night-600 bg-night-900/40 animate-fadeUp"
+                className="border border-night-600 bg-night-900/40 rounded-xl animate-fadeUp"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <header className="flex flex-col gap-3 border-b border-night-700 p-5 sm:flex-row sm:items-center sm:justify-between">
