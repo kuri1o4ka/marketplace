@@ -3,6 +3,7 @@ package auth
 import (
 	"encoding/json"
 	"errors"
+	"net"
 	"net/http"
 	"strings"
 )
@@ -25,19 +26,20 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	token, u, err := h.svc.Register(r.Context(), RegisterInput{
 		Email: req.Email, Password: req.Password, DisplayName: req.DisplayName,
 	})
+
 	switch {
 	case errors.Is(err, ErrEmailTaken):
 		writeError(w, http.StatusConflict, "email already taken")
 		return
 	case errors.Is(err, ErrInvalidEmail), errors.Is(err, ErrWeakPassword):
 		writeError(w, http.StatusBadRequest, err.Error())
+		return
 	case err != nil:
-		writeError(w, http.StatusInternalServerError, "internal error")
+		// ВРЕМЕННО: выводим реальную ошибку из БД на экран, чтобы починить
+		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-
-	writeJSON(w, http.StatusOK, AuthResponse{
-		Token: token, User: ToUserDTO(u)})
+	writeJSON(w, http.StatusCreated, AuthResponse{Token: token, User: ToUserDTO(u)})
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
@@ -53,6 +55,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		UserAgent: r.UserAgent(),
 		IP:        clientIP(r),
 	})
+
 	if errors.Is(err, ErrInvalidCredentials) {
 		writeError(w, http.StatusUnauthorized, "invalid credentials")
 		return
@@ -62,9 +65,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, AuthResponse{
-		Token: token, User: ToUserDTO(u),
-	})
+	writeJSON(w, http.StatusOK, AuthResponse{Token: token, User: ToUserDTO(u)})
 }
 
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
@@ -73,10 +74,12 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnauthorized, "no token")
 		return
 	}
+
 	if err := h.svc.Logout(r.Context(), token); err != nil {
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -86,10 +89,12 @@ func (h *Handler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
+
 	if err := h.svc.LogoutAll(r.Context(), u.ID); err != nil {
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -99,16 +104,17 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
+
 	writeJSON(w, http.StatusOK, ToUserDTO(u))
 }
 
 func bearerToken(r *http.Request) string {
-	h := r.Header.Get("Authorization")
+	header := r.Header.Get("Authorization")
 	const prefix = "Bearer "
-	if !strings.HasPrefix(h, prefix) {
+	if !strings.HasPrefix(header, prefix) {
 		return ""
 	}
-	return strings.TrimSpace(h[len(prefix):])
+	return strings.TrimSpace(header[len(prefix):])
 }
 
 func clientIP(r *http.Request) string {
@@ -116,14 +122,19 @@ func clientIP(r *http.Request) string {
 		if i := strings.IndexByte(xff, ','); i > 0 {
 			return strings.TrimSpace(xff[:i])
 		}
-
 		return strings.TrimSpace(xff)
 	}
-	return r.RemoteAddr
+
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(v)
 }
 

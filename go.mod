@@ -5,6 +5,7 @@ go 1.26.0
 require (
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/go-chi/chi/v5 v5.3.2
+	github.com/go-chi/cors v1.2.2
 	github.com/redis/go-redis/v9 v9.23.0
 )
 

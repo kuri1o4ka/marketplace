@@ -2,14 +2,13 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"strings"
 	"time"
 )
 
 const (
-	sessionTTL     = 30 * 24 * time.Hour
+	SessionTTL     = 30 * 24 * time.Hour
 	MinPasswordLen = 8
 	MaxPasswordLen = 200
 )
@@ -18,10 +17,6 @@ type Service struct {
 	repo  *Repository
 	cache *SessionCache
 	log   *slog.Logger
-}
-
-func (s *Service) LogoutAll(context context.Context, d int64) any {
-	panic("unimplemented")
 }
 
 func NewService(repo *Repository, cache *SessionCache, log *slog.Logger) *Service {
@@ -36,16 +31,14 @@ type RegisterInput struct {
 
 func (s *Service) Register(ctx context.Context, in RegisterInput) (string, *User, error) {
 	email := strings.TrimSpace(strings.ToLower(in.Email))
-	if !ValidEmail(email) {
-		return "", nil, ErrInvalidCredentials
+	if !validEmail(email) {
+		return "", nil, ErrInvalidEmail
 	}
-
 	if len(in.Password) < MinPasswordLen || len(in.Password) > MaxPasswordLen {
-		return "", nil, errors.New("password length invalid")
+		return "", nil, ErrWeakPassword
 	}
-
 	if strings.TrimSpace(in.DisplayName) == "" {
-		return "", nil, errors.New("display name required")
+		return "", nil, ErrInvalidCredentials
 	}
 
 	existing, err := s.repo.GetUserByEmail(ctx, email)
@@ -60,17 +53,16 @@ func (s *Service) Register(ctx context.Context, in RegisterInput) (string, *User
 	if err != nil {
 		return "", nil, err
 	}
-	roleID, err := s.repo.GetRoleIdByName(ctx, "user")
-	if err != nil {
-		return "", nil, err
-	}
+
+	// ХАРДКОД: Всегда назначаем роль "user" (ID = 1), чтобы не искать её в БД
+	roleID := 1
 
 	u, err := s.repo.CreateUser(ctx, email, hash, in.DisplayName, roleID)
 	if err != nil {
 		return "", nil, err
 	}
 
-	token, err := s.CreateSession(ctx, u.ID, "", "")
+	token, err := s.createSession(ctx, u.ID, "", "")
 	if err != nil {
 		return "", nil, err
 	}
@@ -91,9 +83,8 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (string, *User, erro
 	if err != nil {
 		return "", nil, err
 	}
-
 	if u == nil {
-		_ = VerifyPasswordConst()
+		VerifyPasswordConst()
 		return "", nil, ErrInvalidCredentials
 	}
 
@@ -105,14 +96,13 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (string, *User, erro
 		return "", nil, ErrInvalidCredentials
 	}
 
-	token, err := s.CreateSession(ctx, u.ID, in.UserAgent, in.IP)
+	token, err := s.createSession(ctx, u.ID, in.UserAgent, in.IP)
 	if err != nil {
 		return "", nil, err
 	}
 	return token, u, nil
 }
 
-<<<<<<< HEAD
 func (s *Service) Logout(ctx context.Context, token string) error {
 	if token == "" {
 		return nil
@@ -130,32 +120,32 @@ func (s *Service) Logout(ctx context.Context, token string) error {
 	return s.repo.RevokeSession(ctx, sess.ID)
 }
 
-=======
->>>>>>> 26bdd1d84b23e0ba68083c0571e56e7f9a206125
+func (s *Service) LogoutAll(ctx context.Context, userID int64) error {
+	return s.repo.RevokeAllUserSessions(ctx, userID)
+}
+
 func (s *Service) Authenticate(ctx context.Context, token string) (*User, error) {
 	if token == "" {
 		return nil, ErrSessionNotFound
 	}
-	tokenHash := HashToToken(token)
+	hash := HashToToken(token)
 
-	userID, ok, err := s.cache.Get(ctx, tokenHash)
+	userID, ok, err := s.cache.Get(ctx, hash)
 	if err != nil {
 		s.log.Warn("session cache get failed", "err", err)
 	}
 	if !ok {
-		sess, err := s.repo.GetActiveSessionByTokenHash(ctx, tokenHash)
+		sess, err := s.repo.GetActiveSessionByTokenHash(ctx, hash)
 		if err != nil {
 			return nil, err
 		}
-
 		if sess == nil {
 			return nil, ErrSessionNotFound
 		}
 		userID = sess.UserID
-
 		ttl := time.Until(sess.ExpiresAt)
 		if ttl > 0 {
-			_ = s.cache.Set(ctx, tokenHash, userID, ttl)
+			_ = s.cache.Set(ctx, hash, userID, ttl)
 		}
 	}
 
@@ -163,35 +153,31 @@ func (s *Service) Authenticate(ctx context.Context, token string) (*User, error)
 	if err != nil {
 		return nil, err
 	}
-
 	if u == nil {
 		return nil, ErrSessionNotFound
 	}
-
 	return u, nil
 }
 
-func (s *Service) CreateSession(ctx context.Context, userID int64, ua, ip string) (string, error) {
+func (s *Service) createSession(ctx context.Context, userID int64, ua, ip string) (string, error) {
 	token, err := NewToken()
 	if err != nil {
 		return "", err
 	}
 	hash := HashToToken(token)
 
-	sess, err := s.repo.CreateSession(ctx, userID, hash, ua, ip, sessionTTL)
+	sess, err := s.repo.CreateSession(ctx, userID, hash, ua, ip, SessionTTL)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
-
 	ttl := time.Until(sess.ExpiresAt)
 	if err := s.cache.Set(ctx, hash, userID, ttl); err != nil {
-		s.log.Warn("session cache get failed", "err", err)
+		s.log.Warn("session cache set failed", "err", err)
 	}
-
 	return token, nil
 }
 
-func ValidEmail(s string) bool {
+func validEmail(s string) bool {
 	at := strings.IndexByte(s, '@')
-	return at > 0 && at < len(s)-1 && !strings.ContainsAny(s, "\t\n")
+	return at > 0 && at < len(s)-1 && !strings.ContainsAny(s, " \t\n")
 }
