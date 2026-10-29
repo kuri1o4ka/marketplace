@@ -23,20 +23,20 @@ const columns = [
 
 const currentYear = new Date().getFullYear();
 
-const columnTitle = 'text-[11px] font-semibold uppercase tracking-luxe text-white/45';
+const columnTitle = 'text-[11px] font-semibold uppercase tracking-luxe text-night-500';
 
 export function Footer() {
   return (
-    <footer className="mt-24 bg-cream text-white">
+    <footer className="mt-24 border-t border-night-600 bg-white text-night-950">
       <div className="container-luxe grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr_1.1fr]">
         <div className="space-y-5">
-          <Link to="/" className="font-display text-3xl tracking-[0.12em] text-white">
+          <Link to="/" className="font-display text-3xl tracking-[0.12em] text-night-950">
             POLYCLOTHES.
           </Link>
-          <p className="max-w-xs text-sm leading-relaxed text-white/60">
+          <p className="max-w-xs text-sm leading-relaxed text-night-600">
             Маркетплейс архивной и винтажной одежды. Каждая вещь проходит ручную и AI-проверку.
           </p>
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-white/45">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-muted">
             <ShieldCheck size={14} />
             Проверено экспертами
           </div>
@@ -48,7 +48,7 @@ export function Footer() {
             <ul className="space-y-2.5">
               {column.links.map((link) => (
                 <li key={link.to}>
-                  <Link to={link.to} className="text-sm text-white/70 transition hover:text-white">
+                  <Link to={link.to} className="text-sm text-night-600 transition hover:text-night-950">
                     {link.label}
                   </Link>
                 </li>
@@ -61,7 +61,7 @@ export function Footer() {
           <p className={columnTitle}>Связь</p>
           <a
             href="mailto:hello@polyclothes.ru"
-            className="flex items-center gap-2 text-sm text-white/70 transition hover:text-white"
+            className="flex items-center gap-2 text-sm text-night-600 transition hover:text-night-950"
           >
             <Mail size={15} />
             hello@polyclothes.ru
@@ -70,20 +70,20 @@ export function Footer() {
             href="https://instagram.com"
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-2 text-sm text-white/70 transition hover:text-white"
+            className="flex items-center gap-2 text-sm text-night-600 transition hover:text-night-950"
           >
             <AtSign size={15} />
             @polyclothes
             <ArrowUpRight size={13} />
           </a>
-          <p className="pt-2 text-xs leading-relaxed text-white/40">
+          <p className="pt-2 text-xs leading-relaxed text-night-500">
             Демонстрационный проект. Платежи и доставка имитируются.
           </p>
         </div>
       </div>
 
-      <div className="border-t border-white/10">
-        <div className="container-luxe flex flex-col gap-2 py-5 text-[10px] uppercase tracking-[0.16em] text-white/40 sm:flex-row sm:items-center sm:justify-between">
+      <div className="border-t border-night-600">
+        <div className="container-luxe flex flex-col gap-2 py-5 text-[10px] uppercase tracking-[0.16em] text-night-500 sm:flex-row sm:items-center sm:justify-between">
           <span>© {currentYear} Polyclothes</span>
           <span>Vintage marketplace · Moscow</span>
         </div>

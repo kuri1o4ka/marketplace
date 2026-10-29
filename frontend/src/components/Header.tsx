@@ -74,7 +74,7 @@ export function Header() {
     );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-night-600 bg-white/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-night-600 bg-night-950/90 backdrop-blur-xl">
       <div className="container-luxe relative flex h-[72px] items-center justify-between gap-6">
         <Link to="/" className="font-display text-2xl tracking-[0.12em] text-cream transition hover:text-accent">
           POLYCLOTHES.
@@ -101,7 +101,7 @@ export function Header() {
           >
             <ShoppingBag size={20} />
             {cartCount > 0 ? (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-cream px-1 text-[10px] font-bold text-white">
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-night-950">
                 {cartCount}
               </span>
             ) : null}

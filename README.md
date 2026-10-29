@@ -101,7 +101,7 @@ set -a; source .env; set +a
 - Мастер продажи: drag-and-drop загрузка 2–3 фото в MinIO с прогрессом, mock AI-оценка состояния, публикация с отправкой на модерацию.
 - Модерация: очередь, одобрение, отклонение с причиной.
 - Корзина, checkout с резервированием средств, заказы с составом, кошелёк с пополнением и историей операций.
-- Minimal White & Black UI (вдохновение: spin4spin): React 19 + TypeScript + Vite + Tailwind + TanStack Query + React Router.
+- Minimal Dark UI: чёрная база, белое дополнение, приглушённый белый акцент (вдохновение: spin4spin). React 19 + TypeScript + Vite + Tailwind + TanStack Query + React Router.
 
 Вне текущей итерации (по плану следующих этапов): worker закрытия аукционов, WebSocket-обновления, автоматический release escrow, денежный тип вместо `float64`, полноценный ML-сервис, OpenAPI, полный Docker/CI-контур.
 

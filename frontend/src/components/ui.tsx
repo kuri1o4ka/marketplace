@@ -279,7 +279,7 @@ export function Pagination({
             className={cn(
               'h-10 min-w-10 border px-3 text-sm transition',
               item === page
-                ? 'border-accent bg-accent text-white'
+                ? 'border-accent bg-accent text-night-950'
                 : 'border-night-600 text-muted hover:border-accent hover:text-accent',
             )}
             aria-current={item === page ? 'page' : undefined}

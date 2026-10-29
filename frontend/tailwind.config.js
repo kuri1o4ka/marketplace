@@ -4,26 +4,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Legacy token names kept for compatibility, but the palette is now
-        // light: `night-950` is the page background and `cream` is ink.
+        // Dark theme: `night-950` is the page background and `cream` is ink.
         night: {
-          950: '#FFFFFF',
-          900: '#FAFAFA',
-          850: '#F6F6F6',
-          800: '#F2F2F2',
-          700: '#EDEDED',
-          600: '#E5E5E5',
-          500: '#C9C9C9',
+          950: '#0A0A0A',
+          900: '#141414',
+          850: '#1A1A1A',
+          800: '#1F1F1F',
+          700: '#2A2A2A',
+          600: '#3A3A3A',
+          500: '#6B6B6B',
         },
         accent: {
-          DEFAULT: '#9B1C1C',
-          light: '#B3261E',
-          dark: '#7F1616',
+          DEFAULT: '#F5F5F5',
+          light: '#FFFFFF',
+          dark: '#D9D9D9',
         },
-        cream: '#0A0A0A',
-        muted: '#6B6B6B',
-        danger: '#B42318',
-        success: '#1F7A4D',
+        cream: '#FFFFFF',
+        muted: '#9CA3AF',
+        danger: '#E5484D',
+        success: '#34D399',
       },
       fontFamily: {
         sans: ['Montserrat', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
@@ -33,8 +32,8 @@ export default {
         luxe: '0.12em',
       },
       boxShadow: {
-        glow: '0 0 0 1px rgba(155,28,28,0.28), 0 18px 50px -34px rgba(155,28,28,0.35)',
-        card: '0 24px 60px -48px rgba(0,0,0,0.55)',
+        glow: '0 0 0 1px rgba(245,245,245,0.28), 0 18px 50px -34px rgba(245,245,245,0.35)',
+        card: '0 24px 60px -48px rgba(0,0,0,0.9)',
       },
       keyframes: {
         shimmer: {

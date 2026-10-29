@@ -155,7 +155,7 @@ export default function Home() {
                 />
                 <button
                   type="submit"
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-accent px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-accent-light"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-accent px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-night-950 transition hover:bg-accent-light"
                 >
                   Найти
                 </button>
@@ -184,7 +184,7 @@ export default function Home() {
                 className={cn(
                   'border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition',
                   !categoryId
-                    ? 'border-accent bg-accent text-white'
+                    ? 'border-accent bg-accent text-night-950'
                     : 'border-night-600 text-muted hover:border-accent hover:text-accent',
                 )}
               >
@@ -198,7 +198,7 @@ export default function Home() {
                   className={cn(
                     'border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition',
                     categoryId === category.id
-                      ? 'border-accent bg-accent text-white'
+                      ? 'border-accent bg-accent text-night-950'
                       : 'border-night-600 text-muted hover:border-accent hover:text-accent',
                   )}
                 >

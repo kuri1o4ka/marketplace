@@ -297,7 +297,7 @@ export default function Sell() {
                 className={cn(
                   'flex h-8 w-8 items-center justify-center border text-xs font-semibold transition',
                   step > item.number
-                    ? 'border-accent bg-accent text-white'
+                    ? 'border-accent bg-accent text-night-950'
                     : step === item.number
                       ? 'border-accent text-accent'
                       : 'border-night-600 text-muted',

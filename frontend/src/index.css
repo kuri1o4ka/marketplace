@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    color-scheme: light;
+    color-scheme: dark;
   }
 
   html {
@@ -23,12 +23,12 @@
   }
 
   ::selection {
-    @apply bg-accent text-white;
+    @apply bg-accent text-night-950;
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: #c9c9c9 #ffffff;
+    scrollbar-color: #3a3a3a #0a0a0a;
   }
 
   *::-webkit-scrollbar {
@@ -37,16 +37,16 @@
   }
 
   *::-webkit-scrollbar-thumb {
-    background: #c9c9c9;
+    background: #3a3a3a;
     border-radius: 999px;
   }
 
   *::-webkit-scrollbar-track {
-    background: #ffffff;
+    background: #0a0a0a;
   }
 
   :focus-visible {
-    outline: 2px solid #9b1c1c;
+    outline: 2px solid #f5f5f5;
     outline-offset: 3px;
   }
 }
@@ -65,11 +65,11 @@
   }
 
   .surface {
-    @apply border border-night-600 bg-white;
+    @apply border border-night-600 bg-night-900;
   }
 
   .input {
-    @apply w-full rounded-none border border-night-600 bg-white px-4 py-3 text-sm text-cream placeholder:text-muted/70 transition focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30;
+    @apply w-full rounded-none border border-night-600 bg-night-900 px-4 py-3 text-sm text-cream placeholder:text-muted/70 transition focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30;
   }
 
   .btn {
@@ -77,11 +77,11 @@
   }
 
   .btn-primary {
-    @apply btn bg-accent text-white hover:bg-accent-dark;
+    @apply btn bg-accent text-night-950 hover:bg-accent-light;
   }
 
   .btn-ghost {
-    @apply btn border border-night-600 bg-white text-cream hover:border-cream hover:text-accent;
+    @apply btn border border-night-600 bg-night-850 text-cream hover:border-cream hover:text-accent;
   }
 
   .btn-quiet {
@@ -89,12 +89,12 @@
   }
 
   .card {
-    @apply border border-night-600 bg-white;
+    @apply border border-night-600 bg-night-900;
   }
 
   .skeleton {
     @apply animate-shimmer bg-night-800;
-    background-image: linear-gradient(90deg, #f2f2f2 0%, #e9e9e9 40%, #f2f2f2 80%);
+    background-image: linear-gradient(90deg, #1f1f1f 0%, #2a2a2a 40%, #1f1f1f 80%);
     background-size: 600px 100%;
   }
 }
