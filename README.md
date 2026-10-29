@@ -2,6 +2,109 @@
 
 Веб-приложение для покупки и продажи редкой, винтажной и коллекционной одежды: каталог с фильтрами, аукционы со ставками в реальном времени, безопасная сделка с виртуальными деньгами и AI-подсказка по состоянию вещи (дообученный на размеченном датасете классификатор изображений, отдельный ML-сервис).
 
+## Быстрый старт (демо)
+
+Ниже — рабочий сценарий запуска текущей реализации. Остальная часть документа — исходная спецификация проекта; фактические ограничения итерации перечислены в разделе «Что реализовано».
+
+### Требования
+
+- Docker и Docker Compose
+- Go 1.23+
+- Node.js 20+ и npm
+- `make` (опционально)
+
+### Запуск
+
+```bash
+# 1. Инфраструктура: PostgreSQL 18, Redis 7, MinIO
+docker compose up -d
+
+# 2. Миграции (golang-migrate в контейнере)
+make migrate
+
+# 3. Демо-данные: пользователи, категории, бренды, лоты, аукционы
+make seed
+
+# 4. API на http://localhost:8080
+make run
+
+# 5. Фронтенд на http://localhost:5173 (в отдельном терминале)
+make dev
+```
+
+Без `make`:
+
+```bash
+docker compose up -d
+docker run --rm --network host \
+  -v "$PWD/migrations:/migrations:Z" \
+  migrate/migrate:latest \
+  -path=/migrations \
+  -database "postgres://app:app@localhost:5432/vintage?sslmode=disable" up
+go run ./cmd/seed
+go run ./cmd/api
+cd frontend && npm install && npm run dev
+```
+
+Настройки по умолчанию совпадают с `.env.example`. Чтобы переопределить их, скопируйте файл и загрузите переменные перед запуском:
+
+```bash
+cp .env.example .env
+set -a; source .env; set +a
+```
+
+`make` подхватывает `.env` автоматически.
+
+### Адреса сервисов
+
+| Сервис | Адрес | Доступ |
+| --- | --- | --- |
+| Frontend (Vite) | http://localhost:5173 | — |
+| API | http://localhost:8080/api | `GET /api/health` |
+| PostgreSQL | localhost:5432 | `app/app`, база `vintage` |
+| Redis | localhost:6379 | — |
+| MinIO S3 | http://localhost:9000 | `minioadmin / minioadmin` |
+| MinIO Console | http://localhost:9001 | `minioadmin / minioadmin` |
+
+Бакет `polyclothes` создаётся автоматически при старте API; изображения доступны публично по `http://localhost:9000/polyclothes/<key>`.
+
+### Демо-аккаунты
+
+Пароль у всех — `password123`.
+
+| Email | Роль | Что можно проверить |
+| --- | --- | --- |
+| `buyer@example.com` | user | баланс 250 000 ₽, корзина, заказы, кошелёк |
+| `seller@example.com` | user | свои лоты, мастер продажи, аукционы |
+| `seller2@example.com` | user | второй продавец в каталоге |
+| `moderator@example.com` | moderator | очередь модерации, одобрение и отклонение |
+
+### Команды `make`
+
+| Команда | Действие |
+| --- | --- |
+| `make up` / `make down` | поднять / остановить инфраструктуру |
+| `make migrate` | применить миграции |
+| `make seed` | заполнить демо-данные (идемпотентно) |
+| `make run` | запустить API |
+| `make dev` | запустить Vite dev-сервер |
+| `make build` | собрать Go-бэкенд и production-фронтенд |
+| `make test` | `go test ./...` |
+| `make lint` / `make fmt` | `go vet` / `gofmt` |
+| `make health` | проверить `GET /api/health` |
+
+### Что реализовано
+
+- Каталог: поиск, фильтры по категории, бренду, состоянию, цене и типу продажи, сортировка, пагинация; фильтры хранятся в URL.
+- Карточка лота, аукционы со ставками и таймером, история ставок.
+- Регистрация и вход с ролью в ответе API; защищённые маршруты и проверка роли модератора.
+- Мастер продажи: drag-and-drop загрузка 2–3 фото в MinIO с прогрессом, mock AI-оценка состояния, публикация с отправкой на модерацию.
+- Модерация: очередь, одобрение, отклонение с причиной.
+- Корзина, checkout с резервированием средств, заказы с составом, кошелёк с пополнением и историей операций.
+- Minimal White & Black UI (вдохновение: spin4spin): React 19 + TypeScript + Vite + Tailwind + TanStack Query + React Router.
+
+Вне текущей итерации (по плану следующих этапов): worker закрытия аукционов, WebSocket-обновления, автоматический release escrow, денежный тип вместо `float64`, полноценный ML-сервис, OpenAPI, полный Docker/CI-контур.
+
 ## Команда
 
 | Участник           | Группа        | Роль                         | Зона ответственности                                                                      |

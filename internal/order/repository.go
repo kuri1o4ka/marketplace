@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/falsefeelings/internal/media"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -14,11 +15,12 @@ type Repository interface {
 }
 
 type pgRepository struct {
-	db *pgxpool.Pool
+	db   *pgxpool.Pool
+	base *media.Resolver
 }
 
-func NewRepository(db *pgxpool.Pool) Repository {
-	return &pgRepository{db: db}
+func NewRepository(db *pgxpool.Pool, base *media.Resolver) Repository {
+	return &pgRepository{db: db, base: base}
 }
 
 func (r *pgRepository) Checkout(ctx context.Context, buyerID int64) ([]int64, error) {
@@ -166,6 +168,38 @@ func (r *pgRepository) GetOrdersByBuyer(ctx context.Context, buyerID int64) ([]O
 		}
 		orders = append(orders, o)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	rows.Close()
+
+	for i := range orders {
+		itemRows, err := r.db.Query(ctx, `
+			SELECT oi.listing_id, l.title, oi.price, COALESCE(img.storage_key, '')
+			FROM order_items oi
+			JOIN listings l ON oi.listing_id = l.id
+			LEFT JOIN LATERAL (
+				SELECT storage_key FROM listing_images
+				WHERE listing_id = l.id ORDER BY position ASC LIMIT 1
+			) img ON true
+			WHERE oi.order_id = $1
+		`, orders[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		orders[i].Items = []OrderItemResponse{}
+		for itemRows.Next() {
+			var item OrderItemResponse
+			if err := itemRows.Scan(&item.ListingID, &item.Title, &item.Price, &item.CoverImage); err != nil {
+				itemRows.Close()
+				return nil, err
+			}
+			item.CoverImage = r.base.URL(item.CoverImage)
+			orders[i].Items = append(orders[i].Items, item)
+		}
+		itemRows.Close()
+	}
+
 	return orders, nil
 }
 
@@ -182,16 +216,21 @@ func (r *pgRepository) GetOrderByID(ctx context.Context, orderID, userID int64) 
 	}
 
 	rows, _ := r.db.Query(ctx, `
-		SELECT oi.listing_id, l.title, oi.price 
+		SELECT oi.listing_id, l.title, oi.price, COALESCE(img.storage_key, '')
 		FROM order_items oi
 		JOIN listings l ON oi.listing_id = l.id
+		LEFT JOIN LATERAL (
+			SELECT storage_key FROM listing_images
+			WHERE listing_id = l.id ORDER BY position ASC LIMIT 1
+		) img ON true
 		WHERE oi.order_id = $1
 	`, orderID)
 	defer rows.Close()
 
 	for rows.Next() {
 		var item OrderItemResponse
-		rows.Scan(&item.ListingID, &item.Title, &item.Price)
+		rows.Scan(&item.ListingID, &item.Title, &item.Price, &item.CoverImage)
+		item.CoverImage = r.base.URL(item.CoverImage)
 		o.Items = append(o.Items, item)
 	}
 

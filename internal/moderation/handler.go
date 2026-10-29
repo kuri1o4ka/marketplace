@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/falsefeelings/internal/auth"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -22,28 +23,32 @@ func (h *Handler) GetPending(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(listings)
+	writeJSON(w, http.StatusOK, listings)
 }
 
 func (h *Handler) Approve(w http.ResponseWriter, r *http.Request) {
+	user, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 
-	var moderatorID int64 = 2
-
-	err := h.svc.Approve(r.Context(), id, moderatorID)
+	err := h.svc.Approve(r.Context(), id, user.ID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "approved"})
+	writeJSON(w, http.StatusOK, map[string]string{"status": "approved"})
 }
 
 func (h *Handler) Reject(w http.ResponseWriter, r *http.Request) {
+	user, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-
-	var moderatorID int64 = 2
 
 	var req RejectRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -51,11 +56,20 @@ func (h *Handler) Reject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.svc.Reject(r.Context(), id, moderatorID, req)
+	err := h.svc.Reject(r.Context(), id, user.ID, req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "rejected"})
+	writeJSON(w, http.StatusOK, map[string]string{"status": "rejected"})
+}
+
+func writeJSON(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(v)
+}
+
+func writeError(w http.ResponseWriter, status int, msg string) {
+	writeJSON(w, status, map[string]string{"error": msg})
 }

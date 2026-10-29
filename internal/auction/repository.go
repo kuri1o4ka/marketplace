@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/falsefeelings/internal/media"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -16,11 +17,12 @@ type Repository interface {
 }
 
 type pgRepository struct {
-	db *pgxpool.Pool
+	db   *pgxpool.Pool
+	base *media.Resolver
 }
 
-func NewRepository(db *pgxpool.Pool) Repository {
-	return &pgRepository{db: db}
+func NewRepository(db *pgxpool.Pool, base *media.Resolver) Repository {
+	return &pgRepository{db: db, base: base}
 }
 
 func (r *pgRepository) Create(ctx context.Context, sellerID int64, req CreateAuctionRequest) (int64, error) {
@@ -91,9 +93,10 @@ func (r *pgRepository) GetAll(ctx context.Context) ([]AuctionResponse, error) {
 		if err != nil {
 			return nil, err
 		}
+		a.CoverImage = r.base.URL(a.CoverImage)
 		result = append(result, a)
 	}
-	return result, nil
+	return result, rows.Err()
 }
 
 func (r *pgRepository) GetByID(ctx context.Context, id int64) (*AuctionDetailResponse, error) {
@@ -119,15 +122,25 @@ func (r *pgRepository) GetByID(ctx context.Context, id int64) (*AuctionDetailRes
 		return nil, err
 	}
 
-	rows, _ := r.db.Query(ctx, "SELECT id, auction_id, bidder_id, amount, idempotency_key, created_at FROM bids WHERE auction_id = $1 ORDER BY amount DESC", id)
+	a.CoverImage = r.base.URL(a.CoverImage)
+
+	rows, err := r.db.Query(ctx, "SELECT id, auction_id, bidder_id, amount, idempotency_key, created_at FROM bids WHERE auction_id = $1 ORDER BY amount DESC", id)
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var b Bid
-		rows.Scan(&b.ID, &b.AuctionID, &b.BidderID, &b.Amount, &b.IdempotencyKey, &b.CreatedAt)
+		if err := rows.Scan(&b.ID, &b.AuctionID, &b.BidderID, &b.Amount, &b.IdempotencyKey, &b.CreatedAt); err != nil {
+			return nil, err
+		}
 		a.Bids = append(a.Bids, b)
 	}
-	return &a, nil
+	if a.Bids == nil {
+		a.Bids = []Bid{}
+	}
+	return &a, rows.Err()
 }
 
 func (r *pgRepository) PlaceBid(ctx context.Context, auctionID, bidderID int64, amount float64, idempotencyKey string) error {

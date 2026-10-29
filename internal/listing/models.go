@@ -46,6 +46,18 @@ type ListingResponse struct {
 	SellerName string  `json:"seller_name"`
 }
 
+type MyListingResponse struct {
+	ID         int64     `json:"id"`
+	Title      string    `json:"title"`
+	Price      float64   `json:"price"`
+	SaleType   string    `json:"sale_type"`
+	Category   string    `json:"category"`
+	Brand      string    `json:"brand"`
+	CoverImage string    `json:"cover_image"`
+	Status     string    `json:"status"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
 type ListingDetailResponse struct {
 	ListingResponse
 	Description string   `json:"description"`
@@ -70,4 +82,34 @@ type Collection struct {
 	BrandID int    `json:"brand_id"`
 	Name    string `json:"name"`
 	Year    *int   `json:"year"`
+}
+
+type CatalogFilter struct {
+	Query      string
+	CategoryID *int
+	BrandID    *int
+	Condition  string
+	MinPrice   *float64
+	MaxPrice   *float64
+	SaleType   string
+	Sort       string
+	Page       int
+	Limit      int
+}
+
+type CatalogPage struct {
+	Items []ListingResponse `json:"items"`
+	Total int               `json:"total"`
+	Page  int               `json:"page"`
+	Limit int               `json:"limit"`
+}
+
+type AICheckRequest struct {
+	Images []string `json:"images"`
+}
+
+type AICheckResponse struct {
+	Condition    string  `json:"condition"`
+	Confidence   float64 `json:"confidence"`
+	ModelVersion string  `json:"model_version"`
 }

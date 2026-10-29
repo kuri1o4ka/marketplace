@@ -8,9 +8,10 @@ type CheckoutResponse struct {
 }
 
 type OrderItemResponse struct {
-	ListingID int64   `json:"listing_id"`
-	Title     string  `json:"title"`
-	Price     float64 `json:"price"`
+	ListingID  int64   `json:"listing_id"`
+	Title      string  `json:"title"`
+	Price      float64 `json:"price"`
+	CoverImage string  `json:"cover_image"`
 }
 
 type OrderResponse struct {

@@ -1,105 +1,134 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { api } from '../api';
-import { Lock, Mail, User } from 'lucide-react';
-import { motion } from 'framer-motion';
+import type { FormEvent } from 'react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { getErrorMessage } from '../api/client';
+import { AuthShell } from '../components/AuthShell';
+import { Button, Field, Input } from '../components/ui';
+import { useAuth } from '../context/auth';
+import { useToast } from '../context/toast';
+
+const demoAccounts = [
+  { label: 'Покупатель', email: 'buyer@example.com', note: 'баланс 250 000 ₽' },
+  { label: 'Продавец', email: 'seller@example.com', note: 'свои лоты' },
+  { label: 'Модератор', email: 'moderator@example.com', note: 'доступ к модерации' },
+];
 
 export default function Login() {
+  const { login, user, loading } = useAuth();
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
+  const location = useLocation();
+  const toast = useToast();
+
+  const from = (location.state as { from?: string } | null)?.from ?? '/';
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  if (!loading && user) {
+    return <Navigate to={from} replace />;
+  }
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
     setError('');
+    setSubmitting(true);
     try {
-      const endpoint = isLogin ? '/auth/login' : '/auth/register';
-      
-      // Отправляем и display_name, и displayName на всякий случай
-      const payload = isLogin 
-        ? { email, password } 
-        : { email, password, display_name: displayName, displayName: displayName };
-      
-      console.log("ОТПРАВЛЯЕМ НА БЭКЕНД:", payload); // <--- Смотри сюда в консоль браузера (F12)
-      
-      const { data } = await api.post(endpoint, payload);
-      localStorage.setItem('token', data.token);
-      navigate('/');
-      window.location.reload();
-    } catch (err: any) {
-      setError(err.response?.data?.error || err.response?.data || 'Ошибка авторизации');
+      const me = await login({ email: email.trim(), password });
+      toast.success(`С возвращением, ${me.display_name}`);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(getErrorMessage(err, 'Не удалось войти'));
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center blur-sm scale-105"></div>
-      <div className="absolute inset-0 bg-polyclothes/60 backdrop-blur-sm"></div>
-
-      <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 bg-white/90 backdrop-blur-xl p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-md border border-white/20"
-      >
-        <h1 className="text-4xl font-serif font-bold text-polyclothes text-center mb-2">
-          {isLogin ? 'С возвращением' : 'Создать аккаунт'}
-        </h1>
-        <p className="text-center text-stone-500 mb-8 text-sm">
-          {isLogin ? 'Войдите в свой личный архив' : 'Присоединяйтесь к POLYCLOTHES'}
+    <AuthShell
+      eyebrow="Вход"
+      title="Вход в аккаунт"
+      subtitle="Войдите, чтобы покупать, делать ставки и управлять своими лотами."
+      footer={
+        <p>
+          Нет аккаунта?{' '}
+          <Link to="/register" className="text-accent transition hover:text-accent-light">
+            Зарегистрироваться
+          </Link>
         </p>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <Field label="Email" htmlFor="email" required>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="you@example.com"
+          />
+        </Field>
 
-        {error && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-red-50 text-red-500 p-3 rounded-xl mb-4 text-sm text-center font-medium border border-red-100">{error}</motion.div>}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {!isLogin && (
-            <div className="relative group">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-accent transition" size={20} />
-              <input 
-                type="text" placeholder="Ваше имя" required
-                value={displayName} onChange={e => setDisplayName(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-stone-50/50 border border-stone-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent focus:bg-white transition-all"
-              />
-            </div>
-          )}
-          
-          <div className="relative group">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-accent transition" size={20} />
-            <input 
-              type="email" placeholder="Email" required
-              value={email} onChange={e => setEmail(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-stone-50/50 border border-stone-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent focus:bg-white transition-all"
+        <Field label="Пароль" htmlFor="password" required>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="••••••••"
+              className="pr-12"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition hover:text-cream"
+              aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+            >
+              {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
           </div>
+        </Field>
 
-          <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-accent transition" size={20} />
-            <input 
-              type="password" placeholder="Пароль (мин. 8 символов)" required minLength={8}
-              value={password} onChange={e => setPassword(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-stone-50/50 border border-stone-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent focus:bg-white transition-all"
-            />
-          </div>
+        {error ? (
+          <p className="border border-danger/30 bg-danger/10 px-4 py-3 text-xs text-danger">{error}</p>
+        ) : null}
 
-          <motion.button 
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            type="submit" 
-            className="w-full bg-polyclothes text-white py-4 rounded-2xl font-bold hover:bg-stone-800 transition shadow-xl mt-2"
-          >
-            {isLogin ? 'Войти в систему' : 'Зарегистрироваться'}
-          </motion.button>
-        </form>
+        <Button type="submit" className="w-full" icon={LogIn} loading={submitting}>
+          Войти
+        </Button>
+      </form>
 
-        <div className="mt-8 text-center text-sm text-stone-500">
-          {isLogin ? 'Нет аккаунта? ' : 'Уже есть аккаунт? '}
-          <button onClick={() => { setIsLogin(!isLogin); setError(''); }} className="text-accent font-bold hover:underline transition">
-            {isLogin ? 'Создать' : 'Войти'}
-          </button>
+      <div className="space-y-3 border border-night-600 bg-night-900/70 p-4">
+        <p className="label">Демо-аккаунты · пароль password123</p>
+        <div className="grid gap-2">
+          {demoAccounts.map((account) => (
+            <button
+              key={account.email}
+              type="button"
+              onClick={() => {
+                setEmail(account.email);
+                setPassword('password123');
+                setError('');
+              }}
+              className="flex items-center justify-between gap-3 border border-night-600 px-3 py-2 text-left transition hover:border-cream"
+            >
+              <div>
+                <p className="text-xs text-cream">{account.label}</p>
+                <p className="text-[10px] text-muted">{account.email}</p>
+              </div>
+              <span className="text-[10px] uppercase tracking-[0.12em] text-muted">{account.note}</span>
+            </button>
+          ))}
         </div>
-      </motion.div>
-    </div>
+      </div>
+    </AuthShell>
   );
 }

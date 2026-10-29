@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -20,9 +21,12 @@ import (
 	"github.com/falsefeelings/internal/auth"
 	"github.com/falsefeelings/internal/cart"
 	"github.com/falsefeelings/internal/listing"
+	"github.com/falsefeelings/internal/media"
 	mw "github.com/falsefeelings/internal/middleware"
 	"github.com/falsefeelings/internal/moderation"
 	"github.com/falsefeelings/internal/order"
+	"github.com/falsefeelings/internal/storage"
+	"github.com/falsefeelings/internal/upload"
 	"github.com/falsefeelings/internal/wallet"
 )
 
@@ -32,10 +36,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		dbURL = "postgres://app:app@localhost:5432/vintage?sslmode=disable"
-	}
+	dbURL := env("DATABASE_URL", "postgres://app:app@localhost:5432/vintage?sslmode=disable")
 	pool, err := pgxpool.New(ctx, dbURL)
 	if err != nil {
 		log.Error("pg connect failed", "err", err)
@@ -43,14 +44,30 @@ func main() {
 	}
 	defer pool.Close()
 
-	redisAddr := os.Getenv("REDIS_ADDR")
-	if redisAddr == "" {
-		redisAddr = "localhost:6379"
-	}
+	redisAddr := env("REDIS_ADDR", "localhost:6379")
 	rdb := redis.NewClient(&redis.Options{Addr: redisAddr})
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.Error("redis ping failed", "err", err)
 		os.Exit(1)
+	}
+
+	mediaResolver := media.NewResolver(env("MINIO_PUBLIC_URL", "http://localhost:9000/polyclothes"))
+
+	store, err := storage.New(
+		env("MINIO_ENDPOINT", "localhost:9000"),
+		env("MINIO_ACCESS_KEY", "minioadmin"),
+		env("MINIO_SECRET_KEY", "minioadmin"),
+		env("MINIO_BUCKET", "polyclothes"),
+		env("MINIO_PUBLIC_URL", "http://localhost:9000/polyclothes"),
+		envBool("MINIO_USE_SSL", false),
+	)
+	if err != nil {
+		log.Warn("object storage init failed, uploads disabled", "err", err)
+		store = nil
+	} else if err := store.EnsureBucket(ctx); err != nil {
+		log.Warn("object storage bucket check failed", "err", err)
+	} else if err := store.SetPublicRead(ctx); err != nil {
+		log.Warn("object storage public policy failed", "err", err)
 	}
 
 	authRepo := auth.NewRepository(pool)
@@ -58,7 +75,7 @@ func main() {
 	authSvc := auth.NewService(authRepo, authCache, log)
 	authHandler := auth.NewHandler(authSvc)
 
-	listingRepo := listing.NewRepository(pool)
+	listingRepo := listing.NewRepository(pool, mediaResolver)
 	listingSvc := listing.NewService(listingRepo)
 	listingHandler := listing.NewHandler(listingSvc)
 
@@ -66,11 +83,11 @@ func main() {
 	moderationSvc := moderation.NewService(moderationRepo)
 	moderationHandler := moderation.NewHandler(moderationSvc)
 
-	cartRepo := cart.NewRepository(pool)
+	cartRepo := cart.NewRepository(pool, mediaResolver)
 	cartSvc := cart.NewService(cartRepo)
 	cartHandler := cart.NewHandler(cartSvc)
 
-	orderRepo := order.NewRepository(pool)
+	orderRepo := order.NewRepository(pool, mediaResolver)
 	orderSvc := order.NewService(orderRepo)
 	orderHandler := order.NewHandler(orderSvc)
 
@@ -78,9 +95,11 @@ func main() {
 	walletSvc := wallet.NewService(walletRepo)
 	walletHandler := wallet.NewHandler(walletSvc)
 
-	auctionRepo := auction.NewRepository(pool)
+	auctionRepo := auction.NewRepository(pool, mediaResolver)
 	auctionSvc := auction.NewService(auctionRepo)
 	auctionHandler := auction.NewHandler(auctionSvc)
+
+	uploadHandler := upload.NewHandler(store)
 
 	r := chi.NewRouter()
 
@@ -91,13 +110,22 @@ func main() {
 
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
 
 	r.Route("/api", func(r chi.Router) {
+		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+			if err := pool.Ping(r.Context()); err != nil {
+				w.WriteHeader(http.StatusServiceUnavailable)
+				w.Write([]byte(`{"status":"db_error"}`))
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"status":"ok"}`))
+		})
 
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/register", authHandler.Register)
@@ -110,18 +138,26 @@ func main() {
 			})
 		})
 
+		r.Get("/categories", listingHandler.GetCategories)
+		r.Get("/brands", listingHandler.GetBrands)
+
 		r.Route("/listings", func(r chi.Router) {
 			r.Get("/", listingHandler.GetListings)
 			r.Get("/{id}", listingHandler.GetListing)
 			r.Group(func(r chi.Router) {
 				r.Use(mw.Auth(authSvc))
 				r.Post("/", listingHandler.CreateListing)
+				r.Get("/mine", listingHandler.GetMyListings)
 				r.Post("/{id}/ai-check", listingHandler.AICheck)
 			})
 		})
 
+		r.With(mw.Auth(authSvc)).Post("/uploads", uploadHandler.Upload)
+		r.With(mw.Auth(authSvc)).Post("/ai/check", listingHandler.AICheckImages)
+
 		r.Route("/moderation", func(r chi.Router) {
 			r.Use(mw.Auth(authSvc))
+			r.Use(mw.RequireRole("moderator", "admin"))
 			r.Get("/pending", moderationHandler.GetPending)
 			r.Post("/{id}/approve", moderationHandler.Approve)
 			r.Post("/{id}/reject", moderationHandler.Reject)
@@ -157,23 +193,13 @@ func main() {
 				r.Post("/{id}/bids", auctionHandler.PlaceBid)
 			})
 		})
-
-		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-			if err := pool.Ping(r.Context()); err != nil {
-				w.WriteHeader(http.StatusServiceUnavailable)
-				w.Write([]byte(`{"status":"db_error"}`))
-				return
-			}
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"status":"ok"}`))
-		})
 	})
 
 	srv := &http.Server{
-		Addr:         ":8080",
+		Addr:         env("HTTP_ADDR", ":8080"),
 		Handler:      r,
 		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		WriteTimeout: 15 * time.Second,
 	}
 
 	go func() {
@@ -193,4 +219,23 @@ func main() {
 		log.Error("server forced to shutdown", "err", err)
 	}
 	log.Info("server gracefully stopped")
+}
+
+func env(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+func envBool(key string, fallback bool) bool {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		return fallback
+	}
+	return b
 }

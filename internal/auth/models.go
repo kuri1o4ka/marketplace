@@ -8,6 +8,7 @@ type User struct {
 	PasswordHash  string
 	DisplayName   string
 	RoleID        int
+	Role          string
 	EmailVerified bool
 	Balance       string
 	CreatedAt     time.Time

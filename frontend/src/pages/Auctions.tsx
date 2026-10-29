@@ -1,46 +1,128 @@
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../api';
-import { Gavel } from 'lucide-react';
+import { ArrowRight, Gavel, RefreshCw, Timer } from 'lucide-react';
+import { auctionsApi } from '../api/endpoints';
+import { SmartImage } from '../components/SmartImage';
+import { Badge, Button, EmptyState, PageHeader, Skeleton } from '../components/ui';
+import { useNow } from '../hooks/useNow';
+import { formatCountdown, formatMoney } from '../lib/format';
+import { cn } from '../lib/cn';
 
 export default function Auctions() {
-  const { data: auctions, isLoading } = useQuery({
+  const now = useNow();
+  const auctions = useQuery({
     queryKey: ['auctions'],
-    queryFn: async () => (await api.get('/auctions')).data,
+    queryFn: auctionsApi.list,
   });
 
-  if (isLoading) return <div className="text-center mt-32">Загрузка...</div>;
+  const items = auctions.data ?? [];
 
   return (
-    <div className="container mx-auto px-6 py-12">
-      <h1 className="text-3xl font-serif font-bold text-polyclothes mb-8 flex items-center gap-3">
-        <Gavel size={32} className="text-accent" /> Аукционы
-      </h1>
-      
-      {auctions?.length === 0 ? <p className="text-stone-500">Нет активных аукционов.</p> : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {auctions.map((a: any) => (
-            <div key={a.id} className="bg-white rounded-2xl shadow-lg overflow-hidden border border-stone-200">
-              <img src={a.cover_image} alt={a.title} className="w-full h-64 object-cover" />
-              <div className="p-6">
-                <h3 className="font-serif font-bold text-xl text-polyclothes mb-2">{a.title}</h3>
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <p className="text-xs text-stone-400 uppercase">Текущая ставка</p>
-                    <p className="text-2xl font-bold text-accent">{a.current_price} ₽</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-stone-400 uppercase">Ставок</p>
-                    <p className="font-bold">{a.bids_count}</p>
-                  </div>
+    <div className="container-luxe py-10 md:py-14">
+      <PageHeader
+        eyebrow="Аукционы"
+        title="Редкие лоты уходят с молотка"
+        description="Ставки принимаются онлайн. Шаг фиксирован, деньги резервируются только после подтверждения сделки."
+        actions={
+          <Link to="/" className="btn-ghost">
+            В каталог
+            <ArrowRight size={15} />
+          </Link>
+        }
+      />
+
+      <div className="pt-10">
+        {auctions.isLoading ? (
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 3 }, (_, index) => (
+              <div key={index} className="border border-night-600">
+                <Skeleton className="aspect-[4/3] w-full" />
+                <div className="space-y-3 p-5">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-32" />
                 </div>
-                <button onClick={() => alert('Для ставки нужна страница аукциона, мы ее еще не сделали!')} className="w-full bg-polyclothes text-white py-2 rounded-lg font-bold hover:bg-stone-800 transition">
-                  Сделать ставку
-                </button>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        ) : auctions.isError ? (
+          <EmptyState
+            icon={RefreshCw}
+            title="Не удалось загрузить аукционы"
+            description="Проверьте соединение с API и попробуйте ещё раз."
+            action={
+              <Button variant="ghost" onClick={() => auctions.refetch()} loading={auctions.isFetching}>
+                Повторить
+              </Button>
+            }
+          />
+        ) : items.length === 0 ? (
+          <EmptyState
+            icon={Gavel}
+            title="Активных аукционов пока нет"
+            description="Скоро появятся новые лоты. А пока загляните в каталог — там есть вещи с фиксированной ценой."
+            action={
+              <Link to="/" className="btn-primary">
+                Смотреть каталог
+              </Link>
+            }
+          />
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {items.map((auction, index) => {
+              const remaining = new Date(auction.end_at).getTime() - now;
+              const ended = remaining <= 0;
+              return (
+                <Link
+                  key={auction.id}
+                  to={`/auctions/${auction.id}`}
+                  className="group flex flex-col border border-night-600 bg-night-900/60 transition hover:border-accent/60 hover:bg-night-900 animate-fadeUp"
+                  style={{ animationDelay: `${index * 60}ms` }}
+                >
+                  <div className="relative">
+                    <SmartImage
+                      src={auction.cover_image}
+                      alt={auction.title}
+                      className="aspect-[4/3] w-full"
+                      imgClassName="group-hover:scale-[1.03]"
+                    />
+                    <div className="absolute left-3 top-3">
+                      <Badge tone={ended ? 'danger' : 'muted'}>
+                        <Timer size={11} />
+                        {ended ? 'Завершён' : formatCountdown(remaining)}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-1 flex-col gap-3 p-5">
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted">
+                        {auction.bids_count} ставок · шаг {formatMoney(auction.minimum_bid_increment)}
+                      </p>
+                      <h3 className="line-clamp-2 font-display text-2xl leading-snug text-cream transition group-hover:text-cream">
+                        {auction.title}
+                      </h3>
+                    </div>
+
+                    <div className="mt-auto flex items-end justify-between border-t border-night-700 pt-4">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.16em] text-muted">Текущая ставка</p>
+                        <p className={cn('mt-1 font-display text-2xl', ended ? 'text-muted' : 'text-cream')}>
+                          {formatMoney(auction.current_price)}
+                        </p>
+                      </div>
+                      <span className="flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] text-muted transition group-hover:text-cream">
+                        Смотреть
+                        <ArrowRight size={13} />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

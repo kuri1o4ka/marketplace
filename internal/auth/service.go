@@ -54,8 +54,10 @@ func (s *Service) Register(ctx context.Context, in RegisterInput) (string, *User
 		return "", nil, err
 	}
 
-	// ХАРДКОД: Всегда назначаем роль "user" (ID = 1), чтобы не искать её в БД
-	roleID := 1
+	roleID, err := s.repo.RoleIDByName(ctx, "user")
+	if err != nil {
+		return "", nil, err
+	}
 
 	u, err := s.repo.CreateUser(ctx, email, hash, in.DisplayName, roleID)
 	if err != nil {

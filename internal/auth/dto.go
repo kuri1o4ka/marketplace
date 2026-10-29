@@ -17,6 +17,7 @@ type UserDTO struct {
 	DisplayName   string `json:"display_name"`
 	EmailVerified bool   `json:"email_verified"`
 	Balance       string `json:"balance"`
+	Role          string `json:"role"`
 }
 
 type AuthResponse struct {
@@ -31,5 +32,6 @@ func ToUserDTO(u *User) UserDTO {
 		DisplayName:   u.DisplayName,
 		EmailVerified: u.EmailVerified,
 		Balance:       u.Balance,
+		Role:          u.Role,
 	}
 }

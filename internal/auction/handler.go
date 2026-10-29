@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/falsefeelings/internal/auth"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -17,60 +18,75 @@ func NewHandler(svc Service) *Handler {
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	var sellerID int64 = 1
+	user, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	var req CreateAuctionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "invalid json")
 		return
 	}
-	id, err := h.svc.Create(r.Context(), sellerID, req)
+	id, err := h.svc.Create(r.Context(), user.ID, req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]int64{"id": id})
+	writeJSON(w, http.StatusCreated, map[string]int64{"id": id})
 }
 
 func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	auctions, err := h.svc.GetAll(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "failed to load auctions")
 		return
 	}
 	if auctions == nil {
 		auctions = []AuctionResponse{}
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(auctions)
+	writeJSON(w, http.StatusOK, auctions)
 }
 
 func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	auction, err := h.svc.GetByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		writeError(w, http.StatusNotFound, "auction not found")
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(auction)
+	writeJSON(w, http.StatusOK, auction)
 }
 
 func (h *Handler) PlaceBid(w http.ResponseWriter, r *http.Request) {
-	var bidderID int64 = 1
+	user, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 
 	var req PlaceBidRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "invalid json")
 		return
 	}
 
-	err := h.svc.PlaceBid(r.Context(), id, bidderID, req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err := h.svc.PlaceBid(r.Context(), id, user.ID, req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "bid placed"})
+	writeJSON(w, http.StatusOK, map[string]string{"status": "bid placed"})
+}
+
+func writeJSON(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(v)
+}
+
+func writeError(w http.ResponseWriter, status int, msg string) {
+	writeJSON(w, status, map[string]string{"error": msg})
 }

@@ -21,13 +21,19 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 
 func (r *Repository) CreateUser(ctx context.Context, email, passwordHash, displayName string, roleID int) (*User, error) {
 	const q = `
-		INSERT INTO users (email, password_hash, display_name, role_id)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id, email, password_hash, display_name, role_id,
-		          email_verified, balance::text, created_at`
+		WITH inserted AS (
+			INSERT INTO users (email, password_hash, display_name, role_id)
+			VALUES ($1, $2, $3, $4)
+			RETURNING id, email, password_hash, display_name, role_id,
+			          email_verified, balance::text, created_at
+		)
+		SELECT i.id, i.email, i.password_hash, i.display_name, i.role_id, r.name,
+		       i.email_verified, i.balance::text, i.created_at
+		FROM inserted i
+		JOIN roles r ON r.id = i.role_id`
 	var u User
 	err := r.db.QueryRow(ctx, q, email, passwordHash, displayName, roleID).Scan(
-		&u.ID, &u.Email, &u.PasswordHash, &u.DisplayName, &u.RoleID,
+		&u.ID, &u.Email, &u.PasswordHash, &u.DisplayName, &u.RoleID, &u.Role,
 		&u.EmailVerified, &u.Balance, &u.CreatedAt,
 	)
 	return &u, err
@@ -35,13 +41,14 @@ func (r *Repository) CreateUser(ctx context.Context, email, passwordHash, displa
 
 func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	const q = `
-		SELECT id, email, password_hash, display_name, role_id,
-		       email_verified, balance::text, created_at
-		FROM users
-		WHERE email = $1`
+		SELECT u.id, u.email, u.password_hash, u.display_name, u.role_id, r.name,
+		       u.email_verified, u.balance::text, u.created_at
+		FROM users u
+		JOIN roles r ON r.id = u.role_id
+		WHERE u.email = $1`
 	var u User
 	err := r.db.QueryRow(ctx, q, email).Scan(
-		&u.ID, &u.Email, &u.PasswordHash, &u.DisplayName, &u.RoleID,
+		&u.ID, &u.Email, &u.PasswordHash, &u.DisplayName, &u.RoleID, &u.Role,
 		&u.EmailVerified, &u.Balance, &u.CreatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -52,19 +59,26 @@ func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 
 func (r *Repository) GetUserByID(ctx context.Context, id int64) (*User, error) {
 	const q = `
-		SELECT id, email, password_hash, display_name, role_id,
-		       email_verified, balance::text, created_at
-		FROM users
-		WHERE id = $1`
+		SELECT u.id, u.email, u.password_hash, u.display_name, u.role_id, r.name,
+		       u.email_verified, u.balance::text, u.created_at
+		FROM users u
+		JOIN roles r ON r.id = u.role_id
+		WHERE u.id = $1`
 	var u User
 	err := r.db.QueryRow(ctx, q, id).Scan(
-		&u.ID, &u.Email, &u.PasswordHash, &u.DisplayName, &u.RoleID,
+		&u.ID, &u.Email, &u.PasswordHash, &u.DisplayName, &u.RoleID, &u.Role,
 		&u.EmailVerified, &u.Balance, &u.CreatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	return &u, err
+}
+
+func (r *Repository) RoleIDByName(ctx context.Context, name string) (int, error) {
+	var id int
+	err := r.db.QueryRow(ctx, "SELECT id FROM roles WHERE name = $1", name).Scan(&id)
+	return id, err
 }
 
 func (r *Repository) CreateSession(ctx context.Context, userID int64, tokenHash, userAgent, ip string, ttl time.Duration) (*Session, error) {

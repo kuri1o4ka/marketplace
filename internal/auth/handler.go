@@ -35,8 +35,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	case err != nil:
-		// ВРЕМЕННО: выводим реальную ошибку из БД на экран, чтобы починить
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusCreated, AuthResponse{Token: token, User: ToUserDTO(u)})

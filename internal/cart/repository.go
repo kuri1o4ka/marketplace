@@ -3,6 +3,7 @@ package cart
 import (
 	"context"
 
+	"github.com/falsefeelings/internal/media"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -16,11 +17,12 @@ type Repository interface {
 }
 
 type pgRepository struct {
-	db *pgxpool.Pool
+	db   *pgxpool.Pool
+	base *media.Resolver
 }
 
-func NewRepository(db *pgxpool.Pool) Repository {
-	return &pgRepository{db: db}
+func NewRepository(db *pgxpool.Pool, base *media.Resolver) Repository {
+	return &pgRepository{db: db, base: base}
 }
 
 func (r *pgRepository) GetOrCreateCart(ctx context.Context, userID int64) (int64, error) {
@@ -61,9 +63,10 @@ func (r *pgRepository) GetCartItems(ctx context.Context, cartID int64) ([]CartIt
 		if err != nil {
 			return nil, err
 		}
+		i.CoverImage = r.base.URL(i.CoverImage)
 		items = append(items, i)
 	}
-	return items, nil
+	return items, rows.Err()
 }
 
 func (r *pgRepository) AddItem(ctx context.Context, cartID, listingID int64) error {

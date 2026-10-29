@@ -1,0 +1,8 @@
+# Local environment
+.env
+.env.local
+*.local
+
+# Logs and temporary files
+*.log
+tmp/

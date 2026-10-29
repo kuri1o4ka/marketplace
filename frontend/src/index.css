@@ -2,6 +2,99 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-stone-100 text-stone-900;
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-night-950 text-cream antialiased;
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-semibold;
+  }
+
+  ::selection {
+    @apply bg-accent text-white;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #c9c9c9 #ffffff;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: #c9c9c9;
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: #ffffff;
+  }
+
+  :focus-visible {
+    outline: 2px solid #9b1c1c;
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .container-luxe {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8;
+  }
+
+  .label {
+    @apply text-[11px] font-semibold uppercase tracking-luxe text-muted;
+  }
+
+  .hairline {
+    @apply border-t border-night-600;
+  }
+
+  .surface {
+    @apply border border-night-600 bg-white;
+  }
+
+  .input {
+    @apply w-full rounded-none border border-night-600 bg-white px-4 py-3 text-sm text-cream placeholder:text-muted/70 transition focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-none px-6 py-3 text-[12px] font-semibold uppercase tracking-luxe transition disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent text-white hover:bg-accent-dark;
+  }
+
+  .btn-ghost {
+    @apply btn border border-night-600 bg-white text-cream hover:border-cream hover:text-accent;
+  }
+
+  .btn-quiet {
+    @apply btn text-muted hover:text-cream;
+  }
+
+  .card {
+    @apply border border-night-600 bg-white;
+  }
+
+  .skeleton {
+    @apply animate-shimmer bg-night-800;
+    background-image: linear-gradient(90deg, #f2f2f2 0%, #e9e9e9 40%, #f2f2f2 80%);
+    background-size: 600px 100%;
+  }
 }
