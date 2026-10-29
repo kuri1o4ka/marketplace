@@ -183,7 +183,7 @@ export default function Home() {
                 type="button"
                 onClick={() => updateFilter('category_id', undefined)}
                 className={cn(
-                  'border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition',
+                  'border rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition',
                   !categoryId
                     ? 'border-accent bg-accent text-night-950'
                     : 'border-night-600 text-muted hover:border-accent hover:text-accent',
@@ -197,7 +197,7 @@ export default function Home() {
                   type="button"
                   onClick={() => updateFilter('category_id', category.id)}
                   className={cn(
-                    'border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition',
+                    'border rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition',
                     categoryId === category.id
                       ? 'border-accent bg-accent text-night-950'
                       : 'border-night-600 text-muted hover:border-accent hover:text-accent',

@@ -32,6 +32,7 @@ const privateLinks = [
   { to: '/my-listings', label: 'Мои лоты', icon: Tags },
   { to: '/orders', label: 'Заказы', icon: Package },
   { to: '/wallet', label: 'Кошелёк', icon: Wallet },
+  { to: '/profile', label: 'Профиль', icon: UserIcon },
 ];
 
 export function Header() {

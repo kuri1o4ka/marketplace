@@ -16,6 +16,7 @@ const columns = [
     links: [
       { label: 'Заказы', to: '/orders' },
       { label: 'Кошелёк', to: '/wallet' },
+      { label: 'Профиль', to: '/profile' },
       { label: 'Корзина', to: '/cart' },
     ],
   },

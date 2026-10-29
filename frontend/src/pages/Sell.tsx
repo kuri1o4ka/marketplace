@@ -295,7 +295,7 @@ export default function Sell() {
             <div className="flex items-center gap-2.5">
               <span
                 className={cn(
-                  'flex h-8 w-8 items-center justify-center border text-xs font-semibold transition',
+                  'flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold transition',
                   step > item.number
                     ? 'border-accent bg-accent text-night-950'
                     : step === item.number
@@ -355,7 +355,7 @@ export default function Sell() {
                   <div
                     {...getRootProps()}
                     className={cn(
-                      'flex aspect-[3/4] cursor-pointer flex-col items-center justify-center gap-3 border border-dashed p-4 text-center transition',
+                      'flex aspect-[3/4] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed p-4 text-center transition',
                       isDragActive
                         ? 'border-accent bg-accent/5 text-accent'
                         : 'border-night-500 text-muted hover:border-night-500 hover:text-night-500',
@@ -530,7 +530,7 @@ export default function Sell() {
                       type="button"
                       onClick={() => updateDetail('sale_type', option.value)}
                       className={cn(
-                        'border p-4 text-left transition',
+                        'border rounded-xl p-4 text-left transition',
                         details.sale_type === option.value
                           ? 'border-accent bg-accent/[0.06]'
                           : 'border-night-600 hover:border-night-500',

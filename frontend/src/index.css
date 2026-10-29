@@ -73,7 +73,7 @@
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-none px-6 py-3 text-[12px] font-semibold uppercase tracking-luxe transition duration-300 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-[12px] font-semibold uppercase tracking-luxe transition duration-300 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
   }
 
   .btn-primary {

@@ -11,6 +11,10 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+type UpdateProfileRequest struct {
+	DisplayName string `json:"display_name"`
+}
+
 type UserDTO struct {
 	ID            int64  `json:"id"`
 	Email         string `json:"email"`

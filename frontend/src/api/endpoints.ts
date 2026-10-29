@@ -49,6 +49,11 @@ export const authApi = {
     return data;
   },
 
+  async updateMe(displayName: string): Promise<User> {
+    const { data } = await api.patch<User>('/auth/me', { display_name: displayName });
+    return data;
+  },
+
   async logout(): Promise<void> {
     await api.post('/auth/logout');
   },

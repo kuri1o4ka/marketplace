@@ -75,6 +75,26 @@ func (r *Repository) GetUserByID(ctx context.Context, id int64) (*User, error) {
 	return &u, err
 }
 
+func (r *Repository) UpdateUserDisplayName(ctx context.Context, id int64, displayName string) (*User, error) {
+	const q = `
+		UPDATE users SET display_name = $2
+		WHERE id = $1
+		RETURNING u.id, u.email, u.password_hash, u.display_name, u.role_id, r.name,
+		        u.email_verified, u.balance::text, u.created_at
+		FROM users u
+		JOIN roles r ON r.id = u.role_id
+		WHERE u.id = $1`
+	var u User
+	err := r.db.QueryRow(ctx, q, id, displayName).Scan(
+		&u.ID, &u.Email, &u.PasswordHash, &u.DisplayName, &u.RoleID, &u.Role,
+		&u.EmailVerified, &u.Balance, &u.CreatedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrSessionNotFound
+	}
+	return &u, err
+}
+
 func (r *Repository) RoleIDByName(ctx context.Context, name string) (int, error) {
 	var id int
 	err := r.db.QueryRow(ctx, "SELECT id FROM roles WHERE name = $1", name).Scan(&id)

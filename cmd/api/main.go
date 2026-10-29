@@ -135,6 +135,7 @@ func main() {
 				r.Post("/logout", authHandler.Logout)
 				r.Post("/logout-all", authHandler.LogoutAll)
 				r.Get("/me", authHandler.Me)
+				r.Patch("/me", authHandler.UpdateMe)
 			})
 		})
 

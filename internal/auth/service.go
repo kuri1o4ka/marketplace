@@ -78,6 +78,22 @@ type LoginInput struct {
 	IP        string
 }
 
+type UpdateProfileInput struct {
+	DisplayName string `json:"display_name"`
+}
+
+func (s *Service) UpdateMe(ctx context.Context, userID int64, displayName string) (*User, error) {
+	name := strings.TrimSpace(displayName)
+	if name == "" {
+		return nil, ErrInvalidCredentials
+	}
+	u, err := s.repo.UpdateUserDisplayName(ctx, userID, name)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
 func (s *Service) Login(ctx context.Context, in LoginInput) (string, *User, error) {
 	email := strings.TrimSpace(strings.ToLower(in.Email))
 

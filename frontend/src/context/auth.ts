@@ -9,6 +9,7 @@ export interface AuthContextValue {
   register: (payload: RegisterPayload) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateProfile: (displayName: string) => Promise<User>;
   hasRole: (...roles: Role[]) => boolean;
 }
 

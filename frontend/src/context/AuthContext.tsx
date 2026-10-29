@@ -89,6 +89,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [queryClient]);
 
+  const updateProfile = useCallback(
+    async (displayName: string) => {
+      const me = await authApi.updateMe(displayName);
+      setUser(me);
+      queryClient.setQueryData(['me'], me);
+      return me;
+    },
+    [queryClient],
+  );
+
   const hasRole = useCallback(
     (...roles: Role[]) => {
       if (!user) return false;
@@ -106,9 +116,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       logout,
       refreshUser,
+      updateProfile,
       hasRole,
     }),
-    [user, loading, login, register, logout, refreshUser, hasRole],
+    [user, loading, login, register, logout, refreshUser, updateProfile, hasRole],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

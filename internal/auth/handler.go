@@ -107,6 +107,28 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, ToUserDTO(u))
 }
 
+func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
+	u, ok := UserFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	var req UpdateProfileRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+
+	updated, err := h.svc.UpdateMe(r.Context(), u.ID, req.DisplayName)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, ToUserDTO(updated))
+}
+
 func bearerToken(r *http.Request) string {
 	header := r.Header.Get("Authorization")
 	const prefix = "Bearer "

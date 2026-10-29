@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Sell from './pages/Sell';
 import MyListings from './pages/MyListings';
+import Profile from './pages/Profile';
 import Cart from './pages/Cart';
 import Orders from './pages/Orders';
 import WalletPage from './pages/Wallet';
@@ -29,6 +30,7 @@ export function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="sell" element={<Sell />} />
           <Route path="my-listings" element={<MyListings />} />
+          <Route path="profile" element={<Profile />} />
           <Route path="cart" element={<Cart />} />
           <Route path="orders" element={<Orders />} />
           <Route path="wallet" element={<WalletPage />} />
