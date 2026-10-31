@@ -199,8 +199,11 @@ func seedListings(ctx context.Context, tx pgx.Tx, buyerID, sellerID, seller2ID, 
 		}
 
 		var listingID int64
-		err := tx.QueryRow(ctx, "SELECT id FROM listings WHERE title = $1 AND seller_id = $2", d.Title, owner).Scan(&listingID)
+		err := tx.QueryRow(ctx, "SELECT id FROM listings WHERE title = $1 ORDER BY id LIMIT 1", d.Title).Scan(&listingID)
 		if err == nil {
+			if err := seedListingImagesByTitle(ctx, tx, d.Title, d.ImageSeed); err != nil {
+				return err
+			}
 			continue
 		}
 		if err != pgx.ErrNoRows {
@@ -222,14 +225,8 @@ func seedListings(ctx context.Context, tx pgx.Tx, buyerID, sellerID, seller2ID, 
 			return err
 		}
 
-		for pos := 0; pos < 3; pos++ {
-			url := fmt.Sprintf("https://picsum.photos/seed/%s-%d/900/1200", d.ImageSeed, pos)
-			if _, err := tx.Exec(ctx, `
-				INSERT INTO listing_images (listing_id, storage_key, position)
-				VALUES ($1, $2, $3)
-			`, listingID, url, pos); err != nil {
-				return err
-			}
+		if err := seedListingImages(ctx, tx, listingID, d.ImageSeed); err != nil {
+			return err
 		}
 
 		if d.SaleType == "auction" {
@@ -273,9 +270,9 @@ func seedListings(ctx context.Context, tx pgx.Tx, buyerID, sellerID, seller2ID, 
 func seedPendingListing(ctx context.Context, tx pgx.Tx, shopID int64) error {
 	const title = "На модерации: винтажная джинсовая куртка"
 	var existing int64
-	err := tx.QueryRow(ctx, "SELECT id FROM listings WHERE title = $1 AND seller_id = $2", title, shopID).Scan(&existing)
+	err := tx.QueryRow(ctx, "SELECT id FROM listings WHERE title = $1 ORDER BY id LIMIT 1", title).Scan(&existing)
 	if err == nil {
-		return nil
+		return seedListingImagesByTitle(ctx, tx, title, "pending")
 	}
 	if err != pgx.ErrNoRows {
 		return err
@@ -303,12 +300,55 @@ func seedPendingListing(ctx context.Context, tx pgx.Tx, shopID int64) error {
 		return err
 	}
 
+	return seedListingImages(ctx, tx, listingID, "pending")
+}
+
+// seedListingImages points a demo listing at the bundled photos in
+// frontend/public/demo. It also refreshes images for already-seeded listings,
+// so re-running the seed replaces stale placeholder URLs.
+func seedListingImages(ctx context.Context, tx pgx.Tx, listingID int64, seed string) error {
+	if _, err := tx.Exec(ctx, "DELETE FROM listing_images WHERE listing_id = $1 AND position >= 3", listingID); err != nil {
+		return err
+	}
 	for pos := 0; pos < 3; pos++ {
-		url := fmt.Sprintf("https://picsum.photos/seed/pending-%d/900/1200", pos)
+		key := fmt.Sprintf("/demo/%s-%d.jpg", seed, pos+1)
 		if _, err := tx.Exec(ctx, `
 			INSERT INTO listing_images (listing_id, storage_key, position)
 			VALUES ($1, $2, $3)
-		`, listingID, url, pos); err != nil {
+			ON CONFLICT (listing_id, position) DO UPDATE
+			SET storage_key = EXCLUDED.storage_key
+		`, listingID, key, pos); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// seedListingImagesByTitle refreshes every listing sharing a demo title. Older
+// seed versions created duplicate rows for some titles, and they should all get
+// the same real photos.
+func seedListingImagesByTitle(ctx context.Context, tx pgx.Tx, title, seed string) error {
+	rows, err := tx.Query(ctx, "SELECT id FROM listings WHERE title = $1", title)
+	if err != nil {
+		return err
+	}
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			rows.Close()
+			return err
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return err
+	}
+	rows.Close()
+
+	for _, id := range ids {
+		if err := seedListingImages(ctx, tx, id, seed); err != nil {
 			return err
 		}
 	}

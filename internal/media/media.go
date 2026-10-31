@@ -19,6 +19,10 @@ func (r *Resolver) URL(key string) string {
 	if strings.HasPrefix(key, "http://") || strings.HasPrefix(key, "https://") {
 		return key
 	}
+	// Root-relative paths point at the frontend's static assets (demo photos).
+	if strings.HasPrefix(key, "/") {
+		return key
+	}
 	if r == nil || r.Base == "" {
 		return key
 	}
