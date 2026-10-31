@@ -100,7 +100,7 @@ export default function Orders() {
                         <SmartImage
                           src={item.cover_image}
                           alt={item.title}
-                          className="h-16 w-14 shrink-0 border border-night-700"
+                          className="h-16 w-14 shrink-0 rounded-lg border border-night-700"
                         />
                         <div className="min-w-0 flex-1">
                           <Link

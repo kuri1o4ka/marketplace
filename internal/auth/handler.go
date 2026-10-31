@@ -120,13 +120,56 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updated, err := h.svc.UpdateMe(r.Context(), u.ID, req.DisplayName)
-	if err != nil {
+	updated, err := h.svc.UpdateMe(r.Context(), u.ID, UpdateProfileInput{
+		DisplayName:     req.DisplayName,
+		Email:           req.Email,
+		CurrentPassword: req.CurrentPassword,
+	})
+	switch {
+	case errors.Is(err, ErrEmailTaken):
+		writeError(w, http.StatusConflict, "email already taken")
+		return
+	case errors.Is(err, ErrInvalidEmail), errors.Is(err, ErrWeakPassword), errors.Is(err, ErrInvalidCredentials):
 		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	case err != nil:
+		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
 	writeJSON(w, http.StatusOK, ToUserDTO(updated))
+}
+
+func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	u, ok := UserFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	var req ChangePasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+
+	err := h.svc.ChangePassword(r.Context(), u.ID, ChangePasswordInput{
+		CurrentPassword: req.CurrentPassword,
+		NewPassword:     req.NewPassword,
+	})
+	switch {
+	case errors.Is(err, ErrInvalidCredentials):
+		writeError(w, http.StatusBadRequest, "invalid credentials")
+		return
+	case errors.Is(err, ErrWeakPassword):
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	case err != nil:
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func bearerToken(r *http.Request) string {

@@ -79,19 +79,84 @@ type LoginInput struct {
 }
 
 type UpdateProfileInput struct {
-	DisplayName string `json:"display_name"`
+	DisplayName     string `json:"display_name"`
+	Email           string `json:"email"`
+	CurrentPassword string `json:"current_password"`
 }
 
-func (s *Service) UpdateMe(ctx context.Context, userID int64, displayName string) (*User, error) {
-	name := strings.TrimSpace(displayName)
-	if name == "" {
-		return nil, ErrInvalidCredentials
-	}
-	u, err := s.repo.UpdateUserDisplayName(ctx, userID, name)
+type ChangePasswordInput struct {
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password"`
+}
+
+func (s *Service) UpdateMe(ctx context.Context, userID int64, in UpdateProfileInput) (*User, error) {
+	current, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	return u, nil
+	if current == nil {
+		return nil, ErrSessionNotFound
+	}
+
+	name := strings.TrimSpace(in.DisplayName)
+	if name == "" {
+		name = current.DisplayName
+	}
+
+	email := strings.TrimSpace(strings.ToLower(in.Email))
+	if email == "" {
+		email = current.Email
+	}
+	if email != current.Email {
+		if !validEmail(email) {
+			return nil, ErrInvalidEmail
+		}
+		ok, err := VerifyPassword(in.CurrentPassword, current.PasswordHash)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, ErrInvalidCredentials
+		}
+		existing, err := s.repo.GetUserByEmail(ctx, email)
+		if err != nil {
+			return nil, err
+		}
+		if existing != nil && existing.ID != userID {
+			return nil, ErrEmailTaken
+		}
+	}
+
+	return s.repo.UpdateUserProfile(ctx, userID, name, email)
+}
+
+func (s *Service) ChangePassword(ctx context.Context, userID int64, in ChangePasswordInput) error {
+	current, err := s.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if current == nil {
+		return ErrSessionNotFound
+	}
+
+	ok, err := VerifyPassword(in.CurrentPassword, current.PasswordHash)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return ErrInvalidCredentials
+	}
+
+	if len(in.NewPassword) < MinPasswordLen || len(in.NewPassword) > MaxPasswordLen {
+		return ErrWeakPassword
+	}
+
+	hash, err := HashPassword(in.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.UpdateUserPassword(ctx, userID, hash)
 }
 
 func (s *Service) Login(ctx context.Context, in LoginInput) (string, *User, error) {

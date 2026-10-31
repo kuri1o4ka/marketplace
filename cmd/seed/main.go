@@ -80,8 +80,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("users: %v", err)
 	}
-	if err := seedListings(ctx, tx, users["buyer"], users["seller"], users["seller2"]); err != nil {
+	if err := seedListings(ctx, tx, users["buyer"], users["seller"], users["seller2"], users["shop"]); err != nil {
 		log.Fatalf("listings: %v", err)
+	}
+	if err := seedPendingListing(ctx, tx, users["shop"]); err != nil {
+		log.Fatalf("pending listing: %v", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -92,6 +95,7 @@ func main() {
 	fmt.Println("  buyer@example.com     / password123 (user, balance 250000)")
 	fmt.Println("  seller@example.com    / password123 (user)")
 	fmt.Println("  seller2@example.com   / password123 (user)")
+	fmt.Println("  shop@example.com      / password123 (shop, balance 150000)")
 	fmt.Println("  moderator@example.com / password123 (moderator)")
 }
 
@@ -110,7 +114,7 @@ func seedCatalog(ctx context.Context, tx pgx.Tx) error {
 }
 
 func seedRoles(ctx context.Context, tx pgx.Tx) (map[string]int, error) {
-	for _, name := range []string{"user", "moderator", "admin"} {
+	for _, name := range []string{"user", "shop", "moderator", "admin"} {
 		if _, err := tx.Exec(ctx, "INSERT INTO roles (name) VALUES ($1) ON CONFLICT (name) DO NOTHING", name); err != nil {
 			return nil, err
 		}
@@ -150,6 +154,7 @@ func seedUsers(ctx context.Context, tx pgx.Tx, roles map[string]int) (map[string
 		{"buyer", "buyer@example.com", "Анна Покупатель", "user", 250000},
 		{"seller", "seller@example.com", "Архивный Продавец", "user", 0},
 		{"seller2", "seller2@example.com", "Винтажный Дом", "user", 0},
+		{"shop", "shop@example.com", "Vintage Store", "shop", 150000},
 		{"moderator", "moderator@example.com", "Модератор", "moderator", 0},
 	}
 
@@ -174,7 +179,7 @@ func seedUsers(ctx context.Context, tx pgx.Tx, roles map[string]int) (map[string
 	return ids, nil
 }
 
-func seedListings(ctx context.Context, tx pgx.Tx, buyerID, sellerID, seller2ID int64) error {
+func seedListings(ctx context.Context, tx pgx.Tx, buyerID, sellerID, seller2ID, shopID int64) error {
 	categoryIDs, err := lookup(ctx, tx, "categories")
 	if err != nil {
 		return err
@@ -186,7 +191,10 @@ func seedListings(ctx context.Context, tx pgx.Tx, buyerID, sellerID, seller2ID i
 
 	for i, d := range demoListings {
 		owner := sellerID
-		if i%3 == 2 {
+		switch {
+		case i%3 == 2:
+			owner = shopID
+		case i%4 == 3:
 			owner = seller2ID
 		}
 
@@ -257,6 +265,51 @@ func seedListings(ctx context.Context, tx pgx.Tx, buyerID, sellerID, seller2ID i
 			`, bidAmount, buyerID, auctionID); err != nil {
 				return err
 			}
+		}
+	}
+	return nil
+}
+
+func seedPendingListing(ctx context.Context, tx pgx.Tx, shopID int64) error {
+	const title = "На модерации: винтажная джинсовая куртка"
+	var existing int64
+	err := tx.QueryRow(ctx, "SELECT id FROM listings WHERE title = $1 AND seller_id = $2", title, shopID).Scan(&existing)
+	if err == nil {
+		return nil
+	}
+	if err != pgx.ErrNoRows {
+		return err
+	}
+
+	categoryIDs, err := lookup(ctx, tx, "categories")
+	if err != nil {
+		return err
+	}
+	brandIDs, err := lookup(ctx, tx, "brands")
+	if err != nil {
+		return err
+	}
+
+	var listingID int64
+	err = tx.QueryRow(ctx, `
+		INSERT INTO listings (
+			seller_id, title, description, price, category_id, brand_id,
+			size, color, condition, sale_type, status
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'fixed_price', 'on_moderation')
+		RETURNING id
+	`, shopID, title, "Джинсовая куртка с потёртостями, требует проверки подлинности.", 13500,
+		categoryIDs["Куртки"], brandIDs["Levi's"], "L", "Синий", "good").Scan(&listingID)
+	if err != nil {
+		return err
+	}
+
+	for pos := 0; pos < 3; pos++ {
+		url := fmt.Sprintf("https://picsum.photos/seed/pending-%d/900/1200", pos)
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO listing_images (listing_id, storage_key, position)
+			VALUES ($1, $2, $3)
+		`, listingID, url, pos); err != nil {
+			return err
 		}
 	}
 	return nil

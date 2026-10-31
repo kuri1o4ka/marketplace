@@ -130,7 +130,7 @@ export default function Register() {
         </div>
 
         {error ? (
-          <p className="border border-danger/30 bg-danger/10 px-4 py-3 text-xs text-danger">{error}</p>
+          <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-xs text-danger">{error}</p>
         ) : null}
 
         <Button type="submit" className="w-full" icon={UserPlus} loading={submitting}>

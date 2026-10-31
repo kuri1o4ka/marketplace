@@ -6,7 +6,7 @@ import type {
   TextareaHTMLAttributes,
 } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, ShieldCheck } from 'lucide-react';
 import { cn } from '../lib/cn';
 
 /* ---------- Spinner ---------- */
@@ -152,12 +152,29 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]',
+        'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]',
         badgeToneClass[tone],
         className,
       )}
     >
       {children}
+    </span>
+  );
+}
+
+/* ---------- Verified shop badge ---------- */
+
+export function VerifiedShopBadge({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent',
+        className,
+      )}
+      title="Верифицированный магазин"
+    >
+      <ShieldCheck size={11} />
+      Верифицированный магазин
     </span>
   );
 }
@@ -260,7 +277,7 @@ export function Pagination({
         type="button"
         onClick={() => onChange(page - 1)}
         disabled={page <= 1}
-        className="flex h-10 w-10 items-center justify-center border border-night-600 text-muted transition hover:border-accent hover:text-accent disabled:opacity-30"
+        className="flex h-10 w-10 items-center justify-center rounded-lg border border-night-600 text-muted transition hover:border-accent hover:text-accent disabled:opacity-30"
         aria-label="Предыдущая страница"
       >
         <ChevronLeft size={16} />
@@ -277,7 +294,7 @@ export function Pagination({
             type="button"
             onClick={() => onChange(item)}
             className={cn(
-              'h-10 min-w-10 border px-3 text-sm transition',
+              'h-10 min-w-10 rounded-lg border px-3 text-sm transition',
               item === page
                 ? 'border-accent bg-accent text-night-950'
                 : 'border-night-600 text-muted hover:border-accent hover:text-accent',
@@ -293,7 +310,7 @@ export function Pagination({
         type="button"
         onClick={() => onChange(page + 1)}
         disabled={page >= totalPages}
-        className="flex h-10 w-10 items-center justify-center border border-night-600 text-muted transition hover:border-accent hover:text-accent disabled:opacity-30"
+        className="flex h-10 w-10 items-center justify-center rounded-lg border border-night-600 text-muted transition hover:border-accent hover:text-accent disabled:opacity-30"
         aria-label="Следующая страница"
       >
         <ChevronRight size={16} />

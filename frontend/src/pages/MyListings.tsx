@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, PlusSquare, RefreshCw, Tags } from 'lucide-react';
+import { ArrowRight, PencilLine, PlusSquare, RefreshCw, Tags } from 'lucide-react';
 import { listingsApi } from '../api/endpoints';
 import { SmartImage } from '../components/SmartImage';
 import { Badge, Button, EmptyState, PageHeader, Skeleton } from '../components/ui';
@@ -71,16 +71,16 @@ export default function MyListings() {
             }
           />
         ) : (
-          <div className="divide-y divide-night-600 border border-night-600">
+          <div className="divide-y divide-night-600 overflow-hidden rounded-xl border border-night-600">
             {items.map((listing) => (
               <article
                 key={listing.id}
-                className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-5"
+                className="flex flex-col gap-4 p-4 transition hover:bg-night-900/40 sm:flex-row sm:items-center sm:p-5"
               >
                 <SmartImage
                   src={listing.cover_image}
                   alt={listing.title}
-                  className="aspect-[4/5] w-20 shrink-0"
+                  className="aspect-[4/5] w-20 shrink-0 rounded-lg"
                 />
 
                 <div className="min-w-0 flex-1">
@@ -101,15 +101,26 @@ export default function MyListings() {
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between gap-6 sm:flex-col sm:items-end sm:gap-1">
+                <div className="flex items-center justify-between gap-6 sm:flex-col sm:items-end sm:gap-2">
                   <span className="text-sm font-semibold text-cream">{formatMoney(listing.price)}</span>
-                  <Link
-                    to={`/listing/${listing.id}`}
-                    className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.14em] text-muted transition hover:text-accent"
-                  >
-                    Открыть
-                    <ArrowRight size={13} />
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    {listing.status !== 'sold' && listing.sale_type !== 'auction' ? (
+                      <Link
+                        to={`/listing/${listing.id}/edit`}
+                        className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.14em] text-muted transition hover:text-accent"
+                      >
+                        <PencilLine size={13} />
+                        Изменить
+                      </Link>
+                    ) : null}
+                    <Link
+                      to={`/listing/${listing.id}`}
+                      className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.14em] text-muted transition hover:text-accent"
+                    >
+                      Открыть
+                      <ArrowRight size={13} />
+                    </Link>
+                  </div>
                 </div>
               </article>
             ))}

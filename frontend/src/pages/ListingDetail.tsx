@@ -4,7 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Gavel,
+  PencilLine,
   RefreshCw,
   RotateCcw,
   ShieldCheck,
@@ -16,15 +19,15 @@ import { getErrorMessage } from '../api/client';
 import { useAuth } from '../context/auth';
 import { useToast } from '../context/toast';
 import { SmartImage } from '../components/SmartImage';
-import { Badge, Button, EmptyState, Skeleton } from '../components/ui';
-import { conditionLabel, formatMoney } from '../lib/format';
+import { Badge, Button, EmptyState, Skeleton, VerifiedShopBadge } from '../components/ui';
+import { conditionLabel, formatMoney, listingStatusLabel } from '../lib/format';
 import { cn } from '../lib/cn';
 
 export default function ListingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isModerator } = useAuth();
   const toast = useToast();
   const [activeImage, setActiveImage] = useState(0);
   const [trackedId, setTrackedId] = useState(id);
@@ -110,6 +113,13 @@ export default function ListingDetail() {
 
   const item = listing.data;
   const images = item.images.length > 0 ? item.images : [item.cover_image].filter(Boolean);
+  const isOwn = Boolean(user && item.seller_id === user.id);
+  const canEdit = isOwn && item.status !== 'sold' && !isAuction;
+  const hasGallery = images.length > 1;
+
+  const cycleImage = (direction: -1 | 1) => {
+    setActiveImage((current) => (current + direction + images.length) % images.length);
+  };
 
   return (
     <div className="container-luxe py-8 md:py-12">
@@ -134,12 +144,44 @@ export default function ListingDetail() {
 
       <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
         <div className="space-y-4">
-          <SmartImage
-            src={images[activeImage]}
-            alt={item.title}
-            className="aspect-[4/5] w-full border border-night-600"
-            eager
-          />
+          <div className="group relative overflow-hidden rounded-xl border border-night-600">
+            <SmartImage src={images[activeImage]} alt={item.title} className="aspect-[4/5] w-full" eager />
+
+            {hasGallery ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => cycleImage(-1)}
+                  className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-night-950/45 text-cream opacity-80 backdrop-blur-sm transition hover:bg-night-950/70 hover:opacity-100"
+                  aria-label="Предыдущее фото"
+                >
+                  <ChevronLeft size={22} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => cycleImage(1)}
+                  className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-night-950/45 text-cream opacity-80 backdrop-blur-sm transition hover:bg-night-950/70 hover:opacity-100"
+                  aria-label="Следующее фото"
+                >
+                  <ChevronRight size={22} />
+                </button>
+                <div className="absolute inset-x-0 bottom-3 z-10 flex items-center justify-center gap-1.5">
+                  {images.map((image, imageIndex) => (
+                    <button
+                      key={`${image}-dot-${imageIndex}`}
+                      type="button"
+                      onClick={() => setActiveImage(imageIndex)}
+                      className={cn(
+                        'h-1.5 rounded-full transition-all',
+                        imageIndex === activeImage ? 'w-5 bg-cream' : 'w-1.5 bg-cream/50 hover:bg-cream/80',
+                      )}
+                      aria-label={`Фото ${imageIndex + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : null}
+          </div>
 
           {images.length > 1 ? (
             <div className="grid grid-cols-4 gap-3">
@@ -149,7 +191,7 @@ export default function ListingDetail() {
                   type="button"
                   onClick={() => setActiveImage(index)}
                   className={cn(
-                    'border transition',
+                    'overflow-hidden rounded-lg border transition',
                     activeImage === index ? 'border-accent' : 'border-night-600 hover:border-night-500',
                   )}
                   aria-label={`Фото ${index + 1}`}
@@ -167,6 +209,12 @@ export default function ListingDetail() {
               <Badge tone="muted">{item.category}</Badge>
               <Badge tone="muted">{item.brand || 'Без бренда'}</Badge>
               {item.condition ? <Badge tone="success">{conditionLabel(item.condition)}</Badge> : null}
+              {item.seller_role === 'shop' ? <VerifiedShopBadge /> : null}
+              {isOwn && item.status !== 'active' ? (
+                <Badge tone={item.status === 'rejected' ? 'danger' : 'muted'}>
+                  {listingStatusLabel(item.status)}
+                </Badge>
+              ) : null}
               {isAuction ? (
                 <Badge tone="muted">
                   <Gavel size={11} />
@@ -215,7 +263,54 @@ export default function ListingDetail() {
               </div>
             ) : null}
 
-            {isAuction ? (
+            {isOwn ? (
+              <div className="space-y-3">
+                {item.status === 'on_moderation' ? (
+                  <p className="rounded-xl border border-night-600 bg-night-900/60 p-4 text-xs leading-relaxed text-muted">
+                    Лот на повторной проверке. После одобрения модератором изменения появятся в каталоге.
+                  </p>
+                ) : item.status === 'rejected' ? (
+                  <p className="rounded-xl border border-danger/30 bg-danger/10 p-4 text-xs leading-relaxed text-danger">
+                    Лот отклонён модератором. Отредактируйте объявление и отправьте его на проверку снова.
+                  </p>
+                ) : null}
+
+                {canEdit ? (
+                  <Link to={`/listing/${item.id}/edit`} className="btn-primary w-full">
+                    <PencilLine size={16} />
+                    Редактировать объявление
+                  </Link>
+                ) : null}
+
+                {isAuction && auction ? (
+                  <Link to={`/auctions/${auction.id}`} className="btn-ghost w-full">
+                    <Gavel size={16} />
+                    Перейти к аукциону
+                  </Link>
+                ) : null}
+
+                <Link to="/my-listings" className="btn-quiet w-full">
+                  Мои лоты
+                </Link>
+              </div>
+            ) : isModerator ? (
+              <div className="flex items-start gap-3 rounded-xl border border-night-600 bg-night-900/60 p-4">
+                <ShieldCheck size={18} className="mt-0.5 shrink-0 text-accent" />
+                <div className="space-y-1">
+                  <p className="text-sm text-cream">Режим модератора</p>
+                  <p className="text-[11px] leading-relaxed text-muted">
+                    Покупка, корзина и ставки недоступны. Решение по лоту принимается в разделе «Модерация».
+                  </p>
+                  <Link
+                    to={item.status === 'on_moderation' ? `/moderation/${item.id}` : '/moderation'}
+                    className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.14em] text-accent transition hover:text-cream"
+                  >
+                    Открыть модерацию
+                    <ChevronRight size={12} />
+                  </Link>
+                </div>
+              </div>
+            ) : isAuction ? (
               <div className="space-y-3">
                 {auction ? (
                   <Link to={`/auctions/${auction.id}`} className="btn-primary w-full">

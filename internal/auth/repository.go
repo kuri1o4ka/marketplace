@@ -75,17 +75,16 @@ func (r *Repository) GetUserByID(ctx context.Context, id int64) (*User, error) {
 	return &u, err
 }
 
-func (r *Repository) UpdateUserDisplayName(ctx context.Context, id int64, displayName string) (*User, error) {
+func (r *Repository) UpdateUserProfile(ctx context.Context, id int64, displayName, email string) (*User, error) {
 	const q = `
-		UPDATE users SET display_name = $2
-		WHERE id = $1
+		UPDATE users u
+		SET display_name = $2, email = $3
+		FROM roles r
+		WHERE u.id = $1 AND r.id = u.role_id
 		RETURNING u.id, u.email, u.password_hash, u.display_name, u.role_id, r.name,
-		        u.email_verified, u.balance::text, u.created_at
-		FROM users u
-		JOIN roles r ON r.id = u.role_id
-		WHERE u.id = $1`
+		          u.email_verified, u.balance::text, u.created_at`
 	var u User
-	err := r.db.QueryRow(ctx, q, id, displayName).Scan(
+	err := r.db.QueryRow(ctx, q, id, displayName, email).Scan(
 		&u.ID, &u.Email, &u.PasswordHash, &u.DisplayName, &u.RoleID, &u.Role,
 		&u.EmailVerified, &u.Balance, &u.CreatedAt,
 	)
@@ -93,6 +92,17 @@ func (r *Repository) UpdateUserDisplayName(ctx context.Context, id int64, displa
 		return nil, ErrSessionNotFound
 	}
 	return &u, err
+}
+
+func (r *Repository) UpdateUserPassword(ctx context.Context, id int64, passwordHash string) error {
+	tag, err := r.db.Exec(ctx, "UPDATE users SET password_hash = $2 WHERE id = $1", id, passwordHash)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrSessionNotFound
+	}
+	return nil
 }
 
 func (r *Repository) RoleIDByName(ctx context.Context, name string) (int, error) {

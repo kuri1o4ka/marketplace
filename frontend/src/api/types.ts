@@ -1,4 +1,4 @@
-export type Role = 'user' | 'moderator' | 'admin';
+export type Role = 'user' | 'shop' | 'moderator' | 'admin';
 
 export interface User {
   id: number;
@@ -33,7 +33,10 @@ export interface ListingSummary {
   category: string;
   brand: string;
   cover_image: string;
+  seller_id: number;
   seller_name: string;
+  seller_role: Role;
+  images: string[];
 }
 
 export interface ListingDetail extends ListingSummary {
@@ -41,7 +44,7 @@ export interface ListingDetail extends ListingSummary {
   size: string;
   color: string;
   condition: string;
-  images: string[];
+  status: string;
 }
 
 export interface MyListing {
@@ -202,5 +205,7 @@ export interface PendingListing {
   title: string;
   price: number;
   seller_name: string;
+  cover_image: string;
+  images: string[];
   created_at: string;
 }

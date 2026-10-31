@@ -70,6 +70,11 @@ func (r *pgRepository) Checkout(ctx context.Context, buyerID int64) ([]int64, er
 	if len(items) == 0 {
 		return nil, errors.New("cart is empty or items unavailable")
 	}
+	for _, item := range items {
+		if item.SellerID == buyerID {
+			return nil, errors.New("cannot buy your own listing")
+		}
+	}
 	if balance < totalSum {
 		return nil, errors.New("insufficient funds")
 	}

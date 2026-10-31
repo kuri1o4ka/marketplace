@@ -20,23 +20,24 @@ import { useAuth } from '../context/auth';
 import { useToast } from '../context/toast';
 import { cn } from '../lib/cn';
 import { formatMoney } from '../lib/format';
-import { Avatar } from './ui';
+import { Avatar, VerifiedShopBadge } from './ui';
 
 const baseLinks = [
   { to: '/', label: 'Каталог', end: true },
   { to: '/auctions', label: 'Аукционы', icon: Gavel },
 ];
 
-const privateLinks = [
+const sellerLinks = [
   { to: '/sell', label: 'Продать', icon: PlusSquare },
   { to: '/my-listings', label: 'Мои лоты', icon: Tags },
   { to: '/orders', label: 'Заказы', icon: Package },
   { to: '/wallet', label: 'Кошелёк', icon: Wallet },
-  { to: '/profile', label: 'Профиль', icon: UserIcon },
 ];
 
+const profileLink = { to: '/profile', label: 'Профиль', icon: UserIcon };
+
 export function Header() {
-  const { user, isAuthenticated, logout, hasRole } = useAuth();
+  const { user, isAuthenticated, logout, hasRole, canSell, isModerator, isShop } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,7 +56,7 @@ export function Header() {
   const { data: cart } = useQuery({
     queryKey: ['cart'],
     queryFn: cartApi.get,
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && canSell,
     staleTime: 15_000,
   });
 
@@ -66,6 +67,7 @@ export function Header() {
   };
 
   const cartCount = cart?.items.length ?? 0;
+  const privateLinks = isModerator ? [profileLink] : [...sellerLinks, profileLink];
   const links = [...baseLinks, ...(isAuthenticated ? privateLinks : [])];
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
@@ -95,27 +97,29 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-4">
-          <Link
-            to="/cart"
-            className="relative flex h-10 w-10 items-center justify-center text-night-600 transition hover:text-night-950"
-            aria-label="Корзина"
-          >
-            <ShoppingBag size={20} />
-            {cartCount > 0 ? (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-night-950">
-                {cartCount}
-              </span>
-            ) : null}
-          </Link>
+          {canSell ? (
+            <Link
+              to="/cart"
+              className="relative flex h-10 w-10 items-center justify-center text-night-600 transition hover:text-night-950"
+              aria-label="Корзина"
+            >
+              <ShoppingBag size={20} />
+              {cartCount > 0 ? (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-night-950">
+                  {cartCount}
+                </span>
+              ) : null}
+            </Link>
+          ) : null}
 
           {isAuthenticated && user ? (
             <div className="relative hidden sm:block">
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((open) => !open)}
-                className="flex items-center gap-2 border border-night-600 py-1.5 pl-1.5 pr-3 text-left transition hover:border-night-950"
+                className="flex h-9 items-center gap-2 rounded-full border border-night-600 py-1 pl-1 pr-2.5 text-left transition hover:border-night-950"
               >
-                <Avatar name={user.display_name} size={30} />
+                <Avatar name={user.display_name} size={28} />
                 <span className="hidden max-w-28 truncate text-xs font-medium text-night-950 md:block">
                   {user.display_name}
                 </span>
@@ -130,13 +134,16 @@ export function Header() {
                     onClick={() => setUserMenuOpen(false)}
                     aria-label="Закрыть меню"
                   />
-                  <div className="absolute right-0 z-50 mt-3 w-64 rounded-xl border border-night-600 bg-night-900 shadow-card">
+                  <div className="absolute right-0 z-50 mt-3 w-64 overflow-hidden rounded-2xl border border-night-600 bg-night-900 shadow-card">
                     <div className="border-b border-night-700 px-4 py-3">
                       <p className="truncate text-sm text-cream">{user.display_name}</p>
                       <p className="truncate text-xs text-muted">{user.email}</p>
-                      <p className="mt-2 text-[10px] uppercase tracking-[0.16em] text-cream">
-                        {formatMoney(Number(user.balance), true)}
-                      </p>
+                      {isShop ? <VerifiedShopBadge className="mt-2" /> : null}
+                      {canSell ? (
+                        <p className="mt-2 text-[10px] uppercase tracking-[0.16em] text-cream">
+                          {formatMoney(Number(user.balance), true)}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="flex flex-col py-1 text-sm">
                       {privateLinks.map((link) => (
@@ -232,9 +239,13 @@ export function Header() {
                   <Avatar name={user.display_name} size={34} />
                   <div>
                     <p className="text-sm text-cream">{user.display_name}</p>
-                    <p className="text-[10px] uppercase tracking-[0.14em] text-cream">
-                      {formatMoney(Number(user.balance), true)}
-                    </p>
+                    {isShop ? (
+                      <VerifiedShopBadge className="mt-1" />
+                    ) : canSell ? (
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-cream">
+                        {formatMoney(Number(user.balance), true)}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
                 <button type="button" onClick={handleLogout} className="btn-ghost px-3 py-2">

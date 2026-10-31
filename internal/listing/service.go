@@ -11,6 +11,7 @@ type Service interface {
 	GetListing(ctx context.Context, id int64) (*ListingDetailResponse, error)
 	GetMyListings(ctx context.Context, sellerID int64) ([]MyListingResponse, error)
 	CreateListing(ctx context.Context, sellerID int64, req CreateListingRequest) (int64, error)
+	UpdateListing(ctx context.Context, listingID, sellerID int64, req CreateListingRequest) error
 	CheckAICondition(ctx context.Context, id int64) (map[string]any, error)
 	CheckImages(ctx context.Context, images []string) (*AICheckResponse, error)
 	GetCategories(ctx context.Context) ([]Category, error)
@@ -59,17 +60,36 @@ func (s *service) GetMyListings(ctx context.Context, sellerID int64) ([]MyListin
 }
 
 func (s *service) CreateListing(ctx context.Context, sellerID int64, req CreateListingRequest) (int64, error) {
+	l, err := buildListing(sellerID, req)
+	if err != nil {
+		return 0, err
+	}
+	return s.repo.Create(ctx, l, req.ImageURLs)
+}
+
+func (s *service) UpdateListing(ctx context.Context, listingID, sellerID int64, req CreateListingRequest) error {
+	if listingID <= 0 {
+		return errors.New("invalid listing id")
+	}
+	l, err := buildListing(sellerID, req)
+	if err != nil {
+		return err
+	}
+	return s.repo.Update(ctx, listingID, sellerID, l, req.ImageURLs)
+}
+
+func buildListing(sellerID int64, req CreateListingRequest) (*Listing, error) {
 	if strings.TrimSpace(req.Title) == "" {
-		return 0, errors.New("title is required")
+		return nil, errors.New("title is required")
 	}
 	if req.Price <= 0 {
-		return 0, errors.New("price must be positive")
+		return nil, errors.New("price must be positive")
 	}
 	if len(req.ImageURLs) == 0 {
-		return 0, errors.New("at least one photo is required")
+		return nil, errors.New("at least one photo is required")
 	}
 	if len(req.ImageURLs) > 10 {
-		return 0, errors.New("max 10 images allowed")
+		return nil, errors.New("max 10 images allowed")
 	}
 
 	saleType := req.SaleType
@@ -77,10 +97,10 @@ func (s *service) CreateListing(ctx context.Context, sellerID int64, req CreateL
 		saleType = "fixed_price"
 	}
 	if saleType != "fixed_price" && saleType != "auction" {
-		return 0, errors.New("invalid sale_type")
+		return nil, errors.New("invalid sale_type")
 	}
 
-	l := &Listing{
+	return &Listing{
 		SellerID:     sellerID,
 		Title:        strings.TrimSpace(req.Title),
 		Description:  req.Description,
@@ -93,9 +113,7 @@ func (s *service) CreateListing(ctx context.Context, sellerID int64, req CreateL
 		Condition:    req.Condition,
 		SaleType:     saleType,
 		Status:       "on_moderation",
-	}
-
-	return s.repo.Create(ctx, l, req.ImageURLs)
+	}, nil
 }
 
 func (s *service) CheckAICondition(ctx context.Context, id int64) (map[string]any, error) {

@@ -16,7 +16,7 @@ export default function AuctionDetail() {
   const { id } = useParams();
   const now = useNow();
   const queryClient = useQueryClient();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isModerator } = useAuth();
   const toast = useToast();
   const [amount, setAmount] = useState('');
 
@@ -117,7 +117,7 @@ export default function AuctionDetail() {
           <SmartImage
             src={item.cover_image}
             alt={item.title}
-            className="aspect-[4/3] w-full border border-night-600"
+            className="aspect-[4/3] w-full rounded-xl border border-night-600"
             eager
           />
           <div className="flex flex-wrap items-center gap-2">
@@ -188,8 +188,12 @@ export default function AuctionDetail() {
               <Link to="/login" state={{ from: `/auctions/${item.id}` }} className="btn-primary mt-4 w-full">
                 Войти, чтобы участвовать
               </Link>
+            ) : isModerator ? (
+              <p className="mt-4 rounded-lg border border-night-600 bg-night-850 px-4 py-3 text-xs text-muted">
+                Модератор не участвует в торгах. Ставки и покупки доступны только покупателям и магазинам.
+              </p>
             ) : isOwner ? (
-              <p className="mt-4 border border-night-600 bg-night-850 px-4 py-3 text-xs text-muted">
+              <p className="mt-4 rounded-lg border border-night-600 bg-night-850 px-4 py-3 text-xs text-muted">
                 Нельзя делать ставки на собственный лот.
               </p>
             ) : (
@@ -229,7 +233,7 @@ export default function AuctionDetail() {
                         type="button"
                         onClick={() => setAmount(String(value))}
                         disabled={ended}
-                        className="flex-1 border border-night-600 py-2 text-[10px] uppercase tracking-[0.12em] text-muted transition hover:border-night-500 hover:text-night-500 disabled:opacity-40"
+                        className="flex-1 rounded-lg border border-night-600 py-2 text-[10px] uppercase tracking-[0.12em] text-muted transition hover:border-night-500 hover:text-night-500 disabled:opacity-40"
                       >
                         {formatMoney(value)}
                       </button>
@@ -243,11 +247,11 @@ export default function AuctionDetail() {
           <div className="space-y-3">
             <p className="label">История ставок</p>
             {item.bids.length === 0 ? (
-              <p className="border border-dashed border-night-600 px-4 py-6 text-center text-xs text-muted">
+              <p className="rounded-xl border border-dashed border-night-600 px-4 py-6 text-center text-xs text-muted">
                 Пока нет ставок. Станьте первым.
               </p>
             ) : (
-              <div className="divide-y divide-night-700 border border-night-600">
+              <div className="divide-y divide-night-700 overflow-hidden rounded-xl border border-night-600">
                 {item.bids.map((bid, index) => (
                   <div key={bid.id} className="flex items-center justify-between gap-4 px-4 py-3">
                     <div className="flex items-center gap-3">

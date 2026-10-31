@@ -3,6 +3,7 @@ package moderation
 import (
 	"context"
 
+	"github.com/falsefeelings/internal/media"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -13,18 +14,28 @@ type Repository interface {
 }
 
 type pgRepository struct {
-	db *pgxpool.Pool
+	db   *pgxpool.Pool
+	base *media.Resolver
 }
 
-func NewRepository(db *pgxpool.Pool) Repository {
-	return &pgRepository{db: db}
+func NewRepository(db *pgxpool.Pool, base *media.Resolver) Repository {
+	return &pgRepository{db: db, base: base}
 }
 
 func (r *pgRepository) GetPending(ctx context.Context) ([]PendingListingResponse, error) {
 	query := `
-		SELECT l.id, l.title, l.price, u.display_name, l.created_at
+		SELECT l.id, l.title, l.price, u.display_name,
+		       COALESCE(img.storage_key, ''), COALESCE(imgs.keys, '{}'::text[]), l.created_at
 		FROM listings l
 		JOIN users u ON l.seller_id = u.id
+		LEFT JOIN LATERAL (
+			SELECT storage_key FROM listing_images
+			WHERE listing_id = l.id ORDER BY position ASC LIMIT 1
+		) img ON true
+		LEFT JOIN LATERAL (
+			SELECT array_agg(storage_key ORDER BY position) AS keys
+			FROM listing_images WHERE listing_id = l.id
+		) imgs ON true
 		WHERE l.status = 'on_moderation'
 		ORDER BY l.created_at ASC
 	`
@@ -34,16 +45,22 @@ func (r *pgRepository) GetPending(ctx context.Context) ([]PendingListingResponse
 	}
 	defer rows.Close()
 
-	var result []PendingListingResponse
+	result := make([]PendingListingResponse, 0)
 	for rows.Next() {
 		var p PendingListingResponse
-		err := rows.Scan(&p.ID, &p.Title, &p.Price, &p.SellerName, &p.CreatedAt)
+		var images []string
+		err := rows.Scan(&p.ID, &p.Title, &p.Price, &p.SellerName, &p.CoverImage, &images, &p.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
+		p.CoverImage = r.base.URL(p.CoverImage)
+		p.Images = make([]string, 0, len(images))
+		for _, key := range images {
+			p.Images = append(p.Images, r.base.URL(key))
+		}
 		result = append(result, p)
 	}
-	return result, nil
+	return result, rows.Err()
 }
 
 func (r *pgRepository) Approve(ctx context.Context, listingID, moderatorID int64) error {

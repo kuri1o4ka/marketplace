@@ -2,6 +2,7 @@ package listing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -14,6 +15,7 @@ type Repository interface {
 	GetByID(ctx context.Context, id int64) (*ListingDetailResponse, error)
 	GetBySeller(ctx context.Context, sellerID int64) ([]MyListingResponse, error)
 	Create(ctx context.Context, listing *Listing, imageURLs []string) (int64, error)
+	Update(ctx context.Context, listingID, sellerID int64, listing *Listing, imageURLs []string) error
 	GetCategories(ctx context.Context) ([]Category, error)
 	GetBrands(ctx context.Context) ([]Brand, error)
 }
@@ -80,10 +82,15 @@ func (r *pgRepository) GetAll(ctx context.Context, f CatalogFilter) ([]ListingRe
 		LEFT JOIN categories c ON l.category_id = c.id
 		LEFT JOIN brands b ON l.brand_id = b.id
 		JOIN users u ON l.seller_id = u.id
+		JOIN roles r ON r.id = u.role_id
 		LEFT JOIN LATERAL (
 			SELECT storage_key FROM listing_images 
 			WHERE listing_id = l.id ORDER BY position ASC LIMIT 1
 		) img ON true
+		LEFT JOIN LATERAL (
+			SELECT array_agg(storage_key ORDER BY position) AS keys
+			FROM listing_images WHERE listing_id = l.id
+		) imgs ON true
 		WHERE ` + strings.Join(where, " AND ")
 
 	var total int
@@ -99,7 +106,8 @@ func (r *pgRepository) GetAll(ctx context.Context, f CatalogFilter) ([]ListingRe
 			COALESCE(c.name, 'Без категории') as category,
 			COALESCE(b.name, 'No Brand') as brand,
 			COALESCE(img.storage_key, '') as cover_image,
-			u.display_name as seller
+			u.id, u.display_name, r.name as seller_role,
+			COALESCE(imgs.keys, '{}'::text[]) as images
 		` + baseQuery + fmt.Sprintf(`
 		ORDER BY %s LIMIT $%d OFFSET $%d`, orderBy, len(args)-1, len(args))
 
@@ -112,14 +120,20 @@ func (r *pgRepository) GetAll(ctx context.Context, f CatalogFilter) ([]ListingRe
 	var result []ListingResponse
 	for rows.Next() {
 		var l ListingResponse
+		var images []string
 		err := rows.Scan(
 			&l.ID, &l.Title, &l.Price, &l.SaleType,
-			&l.Category, &l.Brand, &l.CoverImage, &l.SellerName,
+			&l.Category, &l.Brand, &l.CoverImage,
+			&l.SellerID, &l.SellerName, &l.SellerRole, &images,
 		)
 		if err != nil {
 			return nil, 0, err
 		}
 		l.CoverImage = r.base.URL(l.CoverImage)
+		l.Images = make([]string, 0, len(images))
+		for _, key := range images {
+			l.Images = append(l.Images, r.base.URL(key))
+		}
 		result = append(result, l)
 	}
 	return result, total, rows.Err()
@@ -131,22 +145,29 @@ func (r *pgRepository) GetByID(ctx context.Context, id int64) (*ListingDetailRes
 			l.id, l.title, COALESCE(l.description, ''), l.price, l.sale_type,
 			COALESCE(c.name, ''), COALESCE(b.name, ''),
 			COALESCE(l.size, ''), COALESCE(l.color, ''), COALESCE(l.condition, ''),
-			u.display_name
+			u.id, u.display_name, r.name, l.status, COALESCE(img.storage_key, '')
 		FROM listings l
 		LEFT JOIN categories c ON l.category_id = c.id
 		LEFT JOIN brands b ON l.brand_id = b.id
 		JOIN users u ON l.seller_id = u.id
+		JOIN roles r ON r.id = u.role_id
+		LEFT JOIN LATERAL (
+			SELECT storage_key FROM listing_images
+			WHERE listing_id = l.id ORDER BY position ASC LIMIT 1
+		) img ON true
 		WHERE l.id = $1
 	`
 	var l ListingDetailResponse
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&l.ID, &l.Title, &l.Description, &l.Price, &l.SaleType,
-		&l.Category, &l.Brand, &l.Size, &l.Color, &l.Condition, &l.SellerName,
+		&l.Category, &l.Brand, &l.Size, &l.Color, &l.Condition,
+		&l.SellerID, &l.SellerName, &l.SellerRole, &l.Status, &l.CoverImage,
 	)
 	if err != nil {
 		return nil, err
 	}
-	l.CoverImage = ""
+	l.CoverImage = r.base.URL(l.CoverImage)
+	l.Images = []string{}
 
 	rows, err := r.db.Query(ctx, "SELECT storage_key FROM listing_images WHERE listing_id = $1 ORDER BY position ASC", id)
 	if err != nil {
@@ -162,9 +183,6 @@ func (r *pgRepository) GetByID(ctx context.Context, id int64) (*ListingDetailRes
 	}
 	if len(l.Images) > 0 {
 		l.CoverImage = l.Images[0]
-	}
-	if l.Images == nil {
-		l.Images = []string{}
 	}
 	return &l, rows.Err()
 }
@@ -250,6 +268,60 @@ func (r *pgRepository) Create(ctx context.Context, l *Listing, imageURLs []strin
 	}
 
 	return id, nil
+}
+
+func (r *pgRepository) Update(ctx context.Context, listingID, sellerID int64, listing *Listing, imageURLs []string) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	var ownerID int64
+	var status, saleType string
+	err = tx.QueryRow(ctx, `
+		SELECT seller_id, status, sale_type FROM listings WHERE id = $1 FOR UPDATE
+	`, listingID).Scan(&ownerID, &status, &saleType)
+	if err != nil {
+		return errors.New("listing not found")
+	}
+	if ownerID != sellerID {
+		return errors.New("not your listing")
+	}
+	if status == "sold" {
+		return errors.New("cannot edit sold listing")
+	}
+	if saleType == "auction" {
+		return errors.New("cannot edit auction listing")
+	}
+
+	_, err = tx.Exec(ctx, `
+		UPDATE listings
+		SET title = $2, description = $3, price = $4, category_id = $5, brand_id = $6,
+		    size = $7, color = $8, condition = $9, status = 'on_moderation',
+		    published_at = NULL, updated_at = now()
+		WHERE id = $1
+	`, listingID, listing.Title, listing.Description, listing.Price, listing.CategoryID,
+		listing.BrandID, listing.Size, listing.Color, listing.Condition)
+	if err != nil {
+		return err
+	}
+
+	if len(imageURLs) > 0 {
+		if _, err := tx.Exec(ctx, "DELETE FROM listing_images WHERE listing_id = $1", listingID); err != nil {
+			return err
+		}
+		for i, url := range imageURLs {
+			if _, err := tx.Exec(ctx, `
+				INSERT INTO listing_images (listing_id, storage_key, position)
+				VALUES ($1, $2, $3)
+			`, listingID, url, i); err != nil {
+				return err
+			}
+		}
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *pgRepository) GetCategories(ctx context.Context) ([]Category, error) {

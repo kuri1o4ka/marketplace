@@ -164,7 +164,7 @@ export default function WalletPage() {
                     key={value}
                     type="button"
                     onClick={() => setAmount(String(value))}
-                    className="border border-night-600 py-2 text-[10px] uppercase tracking-[0.1em] text-muted transition hover:border-accent hover:text-accent"
+                    className="rounded-lg border border-night-600 py-2 text-[10px] uppercase tracking-[0.1em] text-muted transition hover:border-accent hover:text-accent"
                   >
                     +{value.toLocaleString('ru-RU')}
                   </button>

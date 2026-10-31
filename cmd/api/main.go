@@ -79,7 +79,7 @@ func main() {
 	listingSvc := listing.NewService(listingRepo)
 	listingHandler := listing.NewHandler(listingSvc)
 
-	moderationRepo := moderation.NewRepository(pool)
+	moderationRepo := moderation.NewRepository(pool, mediaResolver)
 	moderationSvc := moderation.NewService(moderationRepo)
 	moderationHandler := moderation.NewHandler(moderationSvc)
 
@@ -136,6 +136,7 @@ func main() {
 				r.Post("/logout-all", authHandler.LogoutAll)
 				r.Get("/me", authHandler.Me)
 				r.Patch("/me", authHandler.UpdateMe)
+				r.Post("/me/password", authHandler.ChangePassword)
 			})
 		})
 
@@ -147,14 +148,16 @@ func main() {
 			r.Get("/{id}", listingHandler.GetListing)
 			r.Group(func(r chi.Router) {
 				r.Use(mw.Auth(authSvc))
+				r.Use(mw.RequireRole("user", "shop"))
 				r.Post("/", listingHandler.CreateListing)
 				r.Get("/mine", listingHandler.GetMyListings)
+				r.Patch("/{id}", listingHandler.UpdateListing)
 				r.Post("/{id}/ai-check", listingHandler.AICheck)
 			})
 		})
 
-		r.With(mw.Auth(authSvc)).Post("/uploads", uploadHandler.Upload)
-		r.With(mw.Auth(authSvc)).Post("/ai/check", listingHandler.AICheckImages)
+		r.With(mw.Auth(authSvc), mw.RequireRole("user", "shop")).Post("/uploads", uploadHandler.Upload)
+		r.With(mw.Auth(authSvc), mw.RequireRole("user", "shop")).Post("/ai/check", listingHandler.AICheckImages)
 
 		r.Route("/moderation", func(r chi.Router) {
 			r.Use(mw.Auth(authSvc))
@@ -166,6 +169,7 @@ func main() {
 
 		r.Route("/cart", func(r chi.Router) {
 			r.Use(mw.Auth(authSvc))
+			r.Use(mw.RequireRole("user", "shop"))
 			r.Get("/", cartHandler.GetCart)
 			r.Delete("/", cartHandler.ClearCart)
 			r.Post("/items", cartHandler.AddItem)
@@ -174,6 +178,7 @@ func main() {
 
 		r.Route("/orders", func(r chi.Router) {
 			r.Use(mw.Auth(authSvc))
+			r.Use(mw.RequireRole("user", "shop"))
 			r.Post("/checkout", orderHandler.Checkout)
 			r.Get("/", orderHandler.GetMyOrders)
 			r.Get("/{id}", orderHandler.GetOrder)
@@ -181,6 +186,7 @@ func main() {
 
 		r.Route("/wallet", func(r chi.Router) {
 			r.Use(mw.Auth(authSvc))
+			r.Use(mw.RequireRole("user", "shop"))
 			r.Get("/", walletHandler.GetWallet)
 			r.Post("/deposit", walletHandler.Deposit)
 		})
@@ -190,6 +196,7 @@ func main() {
 			r.Get("/{id}", auctionHandler.GetByID)
 			r.Group(func(r chi.Router) {
 				r.Use(mw.Auth(authSvc))
+				r.Use(mw.RequireRole("user", "shop"))
 				r.Post("/", auctionHandler.Create)
 				r.Post("/{id}/bids", auctionHandler.PlaceBid)
 			})

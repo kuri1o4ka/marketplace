@@ -87,6 +87,28 @@ func (h *Handler) CreateListing(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, map[string]int64{"id": id})
 }
 
+func (h *Handler) UpdateListing(w http.ResponseWriter, r *http.Request) {
+	user, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+
+	var req CreateListingRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+
+	if err := h.svc.UpdateListing(r.Context(), id, user.ID, req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "on_moderation"})
+}
+
 func (h *Handler) GetCategories(w http.ResponseWriter, r *http.Request) {
 	categories, err := h.svc.GetCategories(r.Context())
 	if err != nil {

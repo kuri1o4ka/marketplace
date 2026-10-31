@@ -49,9 +49,13 @@ export const authApi = {
     return data;
   },
 
-  async updateMe(displayName: string): Promise<User> {
-    const { data } = await api.patch<User>('/auth/me', { display_name: displayName });
+  async updateMe(payload: { display_name?: string; email?: string; current_password?: string }): Promise<User> {
+    const { data } = await api.patch<User>('/auth/me', payload);
     return data;
+  },
+
+  async changePassword(payload: { current_password: string; new_password: string }): Promise<void> {
+    await api.post('/auth/me/password', payload);
   },
 
   async logout(): Promise<void> {
@@ -78,6 +82,10 @@ export const listingsApi = {
   async create(payload: CreateListingPayload): Promise<number> {
     const { data } = await api.post<{ id: number }>('/listings', payload);
     return data.id;
+  },
+
+  async update(id: number, payload: CreateListingPayload): Promise<void> {
+    await api.patch(`/listings/${id}`, payload);
   },
 
   async categories(): Promise<Category[]> {

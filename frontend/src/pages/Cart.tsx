@@ -127,7 +127,7 @@ export default function Cart() {
                   <SmartImage
                     src={item.cover_image}
                     alt={item.title}
-                    className="aspect-[3/4] w-full border border-night-700"
+                    className="aspect-[3/4] w-full rounded-lg border border-night-700"
                   />
                 </Link>
                 <div className="flex min-w-0 flex-1 flex-col">

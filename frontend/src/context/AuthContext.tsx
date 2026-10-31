@@ -5,7 +5,7 @@ import { authApi } from '../api/endpoints';
 import { tokenStore } from '../api/client';
 import type { LoginPayload, RegisterPayload, Role, User } from '../api/types';
 import { AuthContext } from './auth';
-import type { AuthContextValue } from './auth';
+import type { AuthContextValue, ChangePasswordPayload, UpdateProfilePayload } from './auth';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
@@ -90,13 +90,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   const updateProfile = useCallback(
-    async (displayName: string) => {
-      const me = await authApi.updateMe(displayName);
+    async (payload: UpdateProfilePayload) => {
+      const me = await authApi.updateMe(payload);
       setUser(me);
       queryClient.setQueryData(['me'], me);
       return me;
     },
     [queryClient],
+  );
+
+  const changePassword = useCallback(
+    async (payload: ChangePasswordPayload) => {
+      await authApi.changePassword(payload);
+    },
+    [],
   );
 
   const hasRole = useCallback(
@@ -106,6 +113,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     [user],
   );
+
+  const canSell = Boolean(user && (user.role === 'user' || user.role === 'shop'));
+  const isModerator = Boolean(user && (user.role === 'moderator' || user.role === 'admin'));
+  const isShop = user?.role === 'shop';
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -117,9 +128,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       refreshUser,
       updateProfile,
+      changePassword,
       hasRole,
+      canSell,
+      isModerator,
+      isShop,
     }),
-    [user, loading, login, register, logout, refreshUser, updateProfile, hasRole],
+    [
+      user,
+      loading,
+      login,
+      register,
+      logout,
+      refreshUser,
+      updateProfile,
+      changePassword,
+      hasRole,
+      canSell,
+      isModerator,
+      isShop,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

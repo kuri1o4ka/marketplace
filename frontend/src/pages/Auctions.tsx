@@ -35,7 +35,7 @@ export default function Auctions() {
         {auctions.isLoading ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 3 }, (_, index) => (
-              <div key={index} className="border border-night-600">
+              <div key={index} className="overflow-hidden rounded-xl border border-night-600">
                 <Skeleton className="aspect-[4/3] w-full" />
                 <div className="space-y-3 p-5">
                   <Skeleton className="h-3 w-24" />

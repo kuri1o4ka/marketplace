@@ -36,14 +36,17 @@ type CreateListingRequest struct {
 }
 
 type ListingResponse struct {
-	ID         int64   `json:"id"`
-	Title      string  `json:"title"`
-	Price      float64 `json:"price"`
-	SaleType   string  `json:"sale_type"`
-	Category   string  `json:"category"`
-	Brand      string  `json:"brand"`
-	CoverImage string  `json:"cover_image"`
-	SellerName string  `json:"seller_name"`
+	ID         int64    `json:"id"`
+	Title      string   `json:"title"`
+	Price      float64  `json:"price"`
+	SaleType   string   `json:"sale_type"`
+	Category   string   `json:"category"`
+	Brand      string   `json:"brand"`
+	CoverImage string   `json:"cover_image"`
+	SellerID   int64    `json:"seller_id"`
+	SellerName string   `json:"seller_name"`
+	SellerRole string   `json:"seller_role"`
+	Images     []string `json:"images"`
 }
 
 type MyListingResponse struct {
@@ -60,11 +63,11 @@ type MyListingResponse struct {
 
 type ListingDetailResponse struct {
 	ListingResponse
-	Description string   `json:"description"`
-	Size        string   `json:"size"`
-	Color       string   `json:"color"`
-	Condition   string   `json:"condition"`
-	Images      []string `json:"images"`
+	Description string `json:"description"`
+	Size        string `json:"size"`
+	Color       string `json:"color"`
+	Condition   string `json:"condition"`
+	Status      string `json:"status"`
 }
 
 type Category struct {

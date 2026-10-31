@@ -16,6 +16,8 @@ type PendingListingResponse struct {
 	Title      string    `json:"title"`
 	Price      float64   `json:"price"`
 	SellerName string    `json:"seller_name"`
+	CoverImage string    `json:"cover_image"`
+	Images     []string  `json:"images"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 

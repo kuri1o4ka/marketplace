@@ -8,12 +8,14 @@ import AuctionDetail from './pages/AuctionDetail';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Sell from './pages/Sell';
+import EditListing from './pages/EditListing';
 import MyListings from './pages/MyListings';
 import Profile from './pages/Profile';
 import Cart from './pages/Cart';
 import Orders from './pages/Orders';
 import WalletPage from './pages/Wallet';
 import Moderation from './pages/Moderation';
+import ModerationDetail from './pages/ModerationDetail';
 import NotFound from './pages/NotFound';
 
 export function App() {
@@ -28,9 +30,13 @@ export function App() {
         <Route path="register" element={<Register />} />
 
         <Route element={<ProtectedRoute />}>
-          <Route path="sell" element={<Sell />} />
-          <Route path="my-listings" element={<MyListings />} />
           <Route path="profile" element={<Profile />} />
+        </Route>
+
+        <Route element={<ProtectedRoute roles={['user', 'shop']} />}>
+          <Route path="sell" element={<Sell />} />
+          <Route path="listing/:id/edit" element={<EditListing />} />
+          <Route path="my-listings" element={<MyListings />} />
           <Route path="cart" element={<Cart />} />
           <Route path="orders" element={<Orders />} />
           <Route path="wallet" element={<WalletPage />} />
@@ -38,6 +44,7 @@ export function App() {
 
         <Route element={<ProtectedRoute roles={['moderator', 'admin']} />}>
           <Route path="moderation" element={<Moderation />} />
+          <Route path="moderation/:id" element={<ModerationDetail />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

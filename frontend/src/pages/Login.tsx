@@ -98,7 +98,7 @@ export default function Login() {
         </Field>
 
         {error ? (
-          <p className="border border-danger/30 bg-danger/10 px-4 py-3 text-xs text-danger">{error}</p>
+          <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-xs text-danger">{error}</p>
         ) : null}
 
         <Button type="submit" className="w-full" icon={LogIn} loading={submitting}>
@@ -118,7 +118,7 @@ export default function Login() {
                 setPassword('password123');
                 setError('');
               }}
-              className="flex items-center justify-between gap-3 border border-night-600 px-3 py-2 text-left transition hover:border-cream"
+              className="flex items-center justify-between gap-3 rounded-lg border border-night-600 px-3 py-2 text-left transition hover:border-cream"
             >
               <div>
                 <p className="text-xs text-cream">{account.label}</p>

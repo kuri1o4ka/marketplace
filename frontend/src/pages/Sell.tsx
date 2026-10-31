@@ -332,10 +332,10 @@ export default function Sell() {
 
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {photos.map((photo) => (
-                  <div key={photo.id} className="group relative border border-night-600">
+                  <div key={photo.id} className="group relative overflow-hidden rounded-xl border border-night-600">
                     <SmartImage src={photo.preview} alt="" className="aspect-[3/4] w-full" />
                     {photo.key ? (
-                      <span className="absolute left-2 top-2 flex items-center gap-1 bg-night-950/85 px-2 py-1 text-[9px] uppercase tracking-[0.14em] text-success">
+                      <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-night-950/85 px-2 py-1 text-[9px] uppercase tracking-[0.14em] text-success">
                         <CheckCircle2 size={10} />
                         Загружено
                       </span>
@@ -393,9 +393,9 @@ export default function Sell() {
                     <span>Загрузка в MinIO</span>
                     <span>{progress}%</span>
                   </div>
-                  <div className="h-1 w-full bg-night-700">
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-night-700">
                     <div
-                      className="h-full bg-cream transition-all duration-300"
+                      className="h-full rounded-full bg-cream transition-all duration-300"
                       style={{ width: `${Math.max(progress, 6)}%` }}
                     />
                   </div>
@@ -595,7 +595,7 @@ export default function Sell() {
                 <SmartImage
                   src={photos[0]?.preview}
                   alt={details.title}
-                  className="aspect-[3/4] w-full border border-night-600"
+                  className="aspect-[3/4] w-full rounded-lg border border-night-600"
                 />
                 <div className="space-y-3">
                   <div className="flex flex-wrap gap-2">
@@ -654,7 +654,7 @@ export default function Sell() {
             <SmartImage
               src={photos[0]?.preview}
               alt=""
-              className="mt-3 aspect-[3/4] w-full border border-night-700"
+              className="mt-3 aspect-[3/4] w-full rounded-lg border border-night-700"
             />
             <p className="mt-3 line-clamp-2 font-display text-xl text-cream">
               {details.title || 'Название вещи'}

@@ -36,7 +36,9 @@ export function ProtectedRoute({ roles }: { roles?: Role[] }) {
         <div className="space-y-2">
           <h1 className="font-display text-4xl text-cream">Доступ закрыт</h1>
           <p className="max-w-md text-sm text-muted">
-            Для этого раздела нужна роль модератора. Войдите под аккаунтом модератора, чтобы продолжить.
+            {roles?.includes('moderator')
+              ? 'Для этого раздела нужна роль модератора. Войдите под аккаунтом модератора, чтобы продолжить.'
+              : 'Этот раздел доступен только покупателям и магазинам. Войдите под подходящим аккаунтом, чтобы продолжить.'}
           </p>
         </div>
         <Link to="/" className="btn-ghost">
