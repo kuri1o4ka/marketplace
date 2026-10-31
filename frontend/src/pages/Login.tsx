@@ -11,6 +11,7 @@ import { useToast } from '../context/toast';
 const demoAccounts = [
   { label: 'Покупатель', email: 'buyer@example.com', note: 'баланс 250 000 ₽' },
   { label: 'Продавец', email: 'seller@example.com', note: 'свои лоты' },
+  { label: 'Магазин', email: 'shop@example.com', note: 'верифицирован' },
   { label: 'Модератор', email: 'moderator@example.com', note: 'доступ к модерации' },
 ];
 
